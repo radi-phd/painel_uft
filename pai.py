@@ -25,7 +25,7 @@ import streamlit as st
 # PÁGINA
 # ============================================================
 st.set_page_config(
-    page_title="Painel RH · UFT",
+    page_title="PROGRAD · UFT",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -247,7 +247,7 @@ except Exception as e:
 # ============================================================
 st.sidebar.markdown(f"""
 <div style="padding:.5rem 0 .3rem">
-  <div style="font-family:'Lora',serif;font-size:1.1rem;font-weight:700;">🎓 UFT · Painel RH</div>
+  <div style="font-family:'Lora',serif;font-size:1.1rem;font-weight:700;">🎓 UFT · Painel desenvolvido por: PROGRAD</div>
   <div style="font-size:.68rem;opacity:.55;margin-top:.1rem;">Gestão Estratégica de Pessoas</div>
 </div>
 """, unsafe_allow_html=True)
@@ -339,7 +339,7 @@ st.markdown(f"""
     <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;color:white;">
       Painel Docentes e Técnicos</div>
     <div style="font-size:.8rem;color:rgba(255,255,255,.62);margin-top:3px;">
-      Universidade Federal do Tocantins · Gestão Estratégica de Pessoas</div>
+      Universidade Federal do Tocantins · Análise Estratégica de Pessoas</div>
   </div>
   <div style="background:rgba(200,168,75,.2);border:1px solid rgba(200,168,75,.5);
       color:{D};padding:5px 15px;border-radius:17px;font-size:.74rem;font-weight:700;">
