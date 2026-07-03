@@ -339,7 +339,7 @@ st.markdown(f"""
     <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;color:white;">
       Painel Docentes e Técnicos</div>
     <div style="font-size:.8rem;color:rgba(255,255,255,.62);margin-top:3px;">
-      Universidade Federal do Tocantins · Análise Estratégica de Pessoas</div>
+     · Universidade Federal do Tocantins · </div>
   </div>
   <div style="background:rgba(200,168,75,.2);border:1px solid rgba(200,168,75,.5);
       color:{D};padding:5px 15px;border-radius:17px;font-size:.74rem;font-weight:700;">
