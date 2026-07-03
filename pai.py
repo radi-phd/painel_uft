@@ -337,7 +337,7 @@ st.markdown(f"""
   <div style="font-size:2.4rem;">🎓</div>
   <div style="flex:1">
     <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;color:white;">
-      Painel Analítico Institucional</div>
+      Painel Docentes e Técnicos</div>
     <div style="font-size:.8rem;color:rgba(255,255,255,.62);margin-top:3px;">
       Universidade Federal do Tocantins · Gestão Estratégica de Pessoas</div>
   </div>
