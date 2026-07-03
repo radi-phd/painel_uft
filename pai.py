@@ -247,7 +247,7 @@ except Exception as e:
 # ============================================================
 st.sidebar.markdown(f"""
 <div style="padding:.5rem 0 .3rem">
-  <div style="font-family:'Lora',serif;font-size:1.1rem;font-weight:700;">🎓 UFT · Painel desenvolvido por: PROGRAD</div>
+  <div style="font-family:'Lora',serif;font-size:1.1rem;font-weight:700;">🎓 UFT · PROGRAD</div>
   <div style="font-size:.68rem;opacity:.55;margin-top:.1rem;">Gestão Estratégica de Pessoas</div>
 </div>
 """, unsafe_allow_html=True)
