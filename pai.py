@@ -304,11 +304,11 @@ st.sidebar.markdown(f"""
 ">
   <div style="font-family:'Lora',serif;font-size:.98rem;font-weight:700;
               color:white;letter-spacing:.04em;">
-    UFT · DOCENTES E TÉCNICOS
+    UFT · PROGRAD
   </div>
   <div style="font-size:.63rem;color:{D};margin-top:3px;
               letter-spacing:.05em;font-weight:500;">
-    Gestão Estratégica de Pessoas
+    Coordenação de Avaliação e Educação
   </div>
 </div>
 """, unsafe_allow_html=True)
