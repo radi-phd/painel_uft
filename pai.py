@@ -304,7 +304,7 @@ st.sidebar.markdown(f"""
 ">
   <div style="font-family:'Lora',serif;font-size:.98rem;font-weight:700;
               color:white;letter-spacing:.04em;">
-    UFT · PROGRAD
+    · PROGRAD ·
   </div>
   <div style="font-size:.63rem;color:{D};margin-top:3px;
               letter-spacing:.05em;font-weight:500;">
