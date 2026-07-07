@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 st.set_page_config(
-    page_title="Painel RH · UFT",
+    page_title="PROGRAD · UFT",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -304,7 +304,7 @@ st.sidebar.markdown(f"""
 ">
   <div style="font-family:'Lora',serif;font-size:.98rem;font-weight:700;
               color:white;letter-spacing:.04em;">
-    UFT · Painel RH
+    UFT · DOCENTES E TÉCNICOS
   </div>
   <div style="font-size:.63rem;color:{D};margin-top:3px;
               letter-spacing:.05em;font-weight:500;">
