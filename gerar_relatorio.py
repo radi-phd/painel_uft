@@ -15,7 +15,7 @@ processo = subprocess.Popen(
         "-m",
         "streamlit",
         "run",
-        "dashboard.py"
+        "pai.py"
     ]
 )
 

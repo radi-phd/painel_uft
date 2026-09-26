@@ -173,7 +173,10 @@ TIT_GRUPO = {
 }
 ORDEM_TIT = ["Pós-Doutorado","Doutorado","Mestrado","Especialização",
              "Graduação","Médio/Técnico","Fundamental","Não informado"]
-PESOS_TIT = {"Pós-Doutorado":5,"Doutorado":4,"Mestrado":3,"Especialização":2,
+# Pesos do IQCD (Índice de Qualificação do Corpo Docente — INEP/SINAES):
+# Doutor 5, Mestre 3, Especialista 2, Graduado 1. Pós-doutorado não é
+# titulação acadêmica no SIAPE, por isso conta como Doutorado.
+PESOS_TIT = {"Pós-Doutorado":5,"Doutorado":5,"Mestrado":3,"Especialização":2,
              "Graduação":1,"Médio/Técnico":0,"Fundamental":0,"Não informado":0}
 CAMPUS_KEYS = [
     ("palmas","Palmas"),("araguaína","Araguaína"),("araguaina","Araguaína"),
@@ -188,6 +191,9 @@ def extrai_campus(s):
     for kw, nm in CAMPUS_KEYS:
         if kw in sl: return nm
     return "Outras Unidades"
+
+# Campus que não identificam um local específico: não dá para comparar
+CAMPUS_INDEF = {"Não informado", "Outras Unidades", "UFT – Geral"}
 
 def grupo_ingresso(v):
     v = str(v).upper()
@@ -210,6 +216,13 @@ def grupo_carga(v):
 FAIXAS   = [(0,30,"Até 30"),(31,40,"31–40"),(41,50,"41–50"),(51,60,"51–60"),(61,999,"61+")]
 ORD_FXAS = [f[2] for f in FAIXAS]
 ARQUIVO  = os.path.join(BASE_DIR, "perfil.xlsx")
+ABAS     = {"TÉCNICO": ("técnico", "tecnico"), "DOCENTE": ("docente",)}
+
+def acha_aba(nomes, candidatos):
+    for n in nomes:
+        if n.strip().lower() in candidatos:
+            return n
+    return None
 
 # ============================================================
 # CARREGAMENTO
@@ -220,21 +233,30 @@ def carrega():
         return None, f"Arquivo não encontrado: {ARQUIVO}"
     try:
         xl    = pd.ExcelFile(ARQUIVO, engine="openpyxl")
-        nomes = xl.sheet_names
-        tec   = xl.parse(nomes[0], dtype=str)
-        doc   = xl.parse(nomes[1], dtype=str)
+        partes = []
+        for cat, candidatos in ABAS.items():
+            aba = acha_aba(xl.sheet_names, candidatos)
+            if aba is None:
+                return None, (f"Aba '{candidatos[0]}' não encontrada em perfil.xlsx "
+                              f"(abas existentes: {', '.join(xl.sheet_names)})")
+            parte = xl.parse(aba, dtype=str)
+            parte["CATEGORIA"] = cat
+            partes.append(parte)
     except Exception as e:
         return None, f"Erro ao ler Excel: {e}"
 
-    tec["CATEGORIA"] = "TÉCNICO"
-    doc["CATEGORIA"] = "DOCENTE"
-    df = pd.concat([tec, doc], ignore_index=True)
+    df = pd.concat(partes, ignore_index=True)
 
     for c in ["CPF","CPF_SERVIDOR","RG","DOCUMENTO","NOME"]:
         if c in df.columns: df.drop(columns=c, inplace=True)
 
     for c in df.select_dtypes(include=["object","string"]).columns:
         df[c] = df[c].str.strip()
+
+    # Linhas idênticas em todas as colunas são registros duplicados
+    n_antes = len(df)
+    df = df.drop_duplicates(ignore_index=True)
+    df.attrs["duplicados"] = n_antes - len(df)
 
     df["DT_NASC"] = pd.to_datetime(df["DT_NASC"], dayfirst=True, errors="coerce")
     hoje = pd.Timestamp.today()
@@ -252,8 +274,13 @@ def carrega():
     df["CAMPUS"]         = df["LOTAÇÃO_OFICIAL"].apply(extrai_campus)
     df["INGRESSO_GRUPO"] = df["INGRESSO"].apply(grupo_ingresso)
     df["CARGA_GRUPO"]    = df["CARGA"].apply(grupo_carga)
-    df["DESVIO"]         = (df["LOTAÇÃO_OFICIAL"].fillna("") !=
-                            df["LOTAÇÃO_VINCULADA"].fillna(""))
+    # Desvio de lotação: compara o CAMPUS das duas lotações, não o texto.
+    # Os textos têm níveis diferentes ("Câmpus Universitário de Palmas" x
+    # "Direção do Câmpus de Palmas") e quase nunca são iguais.
+    # Só é avaliável quando os dois lados apontam para um local específico.
+    campus_vinc          = df["LOTAÇÃO_VINCULADA"].apply(extrai_campus)
+    df["DESVIO_AVAL"]    = ~df["CAMPUS"].isin(CAMPUS_INDEF) & ~campus_vinc.isin(CAMPUS_INDEF)
+    df["DESVIO"]         = df["DESVIO_AVAL"] & (df["CAMPUS"] != campus_vinc)
     return df, None
 
 df_raw, erro = carrega()
@@ -329,9 +356,11 @@ campus_sel = st.sidebar.multiselect("Campus",
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("Situação Funcional")
-sit_sel = st.sidebar.multiselect("Situação",
-               sorted(df_raw["SITUAÇÃO"].dropna().unique()),
-               default=sorted(df_raw["SITUAÇÃO"].dropna().unique()))
+sit_opts = sorted(df_raw["SITUAÇÃO"].dropna().unique())
+# Padrão: só servidores ativos. A base inclui desligados ("Sem Vínculo"),
+# aposentados e redistribuídos, que distorcem totais e médias.
+sit_sel = st.sidebar.multiselect("Situação", sit_opts,
+               default=[s for s in sit_opts if s.upper() == "ATIVO"] or sit_opts)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("Qualificação")
@@ -378,11 +407,17 @@ ativos   = (df_f["SITUAÇÃO"].str.upper() == "ATIVO").sum()
 dout_pd  = df_f["TIT_GRUPO"].isin(["Doutorado","Pós-Doutorado"]).sum()
 mestres  = (df_f["TIT_GRUPO"] == "Mestrado").sum()
 desvios  = int(df_f["DESVIO"].sum())
-pct_desv = round(desvios / max(total,1) * 100, 1)
-score    = sum(len(df_f[df_f["TIT_GRUPO"]==n])*p for n,p in PESOS_TIT.items())
-idx_qual = round(score / max(total,1), 2)
-nivel    = ("MUITO ALTA" if idx_qual>=4 else "ALTA" if idx_qual>=3
-            else "MODERADA" if idx_qual>=2 else "BAIXA")
+n_aval   = int(df_f["DESVIO_AVAL"].sum())
+pct_desv = round(desvios / max(n_aval,1) * 100, 1)
+
+def iqcd(d):
+    """Média ponderada da titulação (pesos IQCD). None se não houver registros."""
+    if d.empty: return None
+    return round(d["TIT_GRUPO"].astype(str).map(PESOS_TIT).fillna(0).mean(), 2)
+
+iqcd_doc = iqcd(df_f[df_f["CATEGORIA"] == "DOCENTE"])
+iqcd_tec = iqcd(df_f[df_f["CATEGORIA"] == "TÉCNICO"])
+iqcd_s   = f"{iqcd_doc:.2f}/5" if iqcd_doc is not None else "—"
 idade_v  = df_f["IDADE"].mean()
 idade_s  = f"{idade_v:.1f} a" if pd.notna(idade_v) else "—"
 
@@ -485,9 +520,9 @@ st.markdown(
     + kpi("✅", f"{ativos:,}",     "Ativos",        VD, f"{ativos/max(total,1)*100:.1f}%")
     + kpi("🎓", f"{dout_pd:,}",    "Doutores/PD",   D,  f"{dout_pd/max(total,1)*100:.1f}%")
     + kpi("📚", f"{mestres:,}",    "Mestres",       A,  f"{mestres/max(total,1)*100:.1f}%")
-    + kpi("⭐", f"{idx_qual}/5.0","Qualificação",  VD, nivel)
+    + kpi("⭐", iqcd_s,            "IQCD Docente",  VD, "pesos INEP")
     + kpi("🎂", idade_s,           "Idade Média",   A)
-    + kpi("⚠️", f"{pct_desv}%",   "Desvio Lot.",   AL, f"{desvios:,} serv.")
+    + kpi("⚠️", f"{pct_desv}%",   "Desvio Lot.",   AL, f"{desvios:,} de {n_aval:,} avaliáveis")
     + '</div>',
     unsafe_allow_html=True
 )
@@ -546,22 +581,30 @@ with tab1:
                                      range=[0,cd["Qtd"].max()*1.35]))
         card(fig)
 
-    sec("📊 Índice Médio de Qualificação")
-    fig_g = go.Figure(go.Indicator(
-        mode="gauge+number+delta",value=idx_qual,
-        delta={"reference":3.0,"increasing":{"color":VD},"decreasing":{"color":AL}},
-        number={"suffix":" / 5.0","font":{"size":40,"color":P}},
-        title={"text":f"Índice Médio · Ref. 3,0 · Nível: <b>{nivel}</b>","font":{"size":14}},
-        gauge={"axis":{"range":[0,5],"tickwidth":1,"tickcolor":P},
-               "bar":{"color":P,"thickness":0.25},"bgcolor":"white",
-               "borderwidth":2,"bordercolor":BD,
-               "steps":[{"range":[0,1],"color":"#F0F4FA"},{"range":[1,2],"color":"#C5D9F0"},
-                         {"range":[2,3],"color":"#5A9AD4"},{"range":[3,4],"color":"#1A5FA8"},
-                         {"range":[4,5],"color":P}],
-               "threshold":{"line":{"color":D,"width":4},"thickness":0.8,"value":idx_qual}},
-    ))
-    fig_g.update_layout(**BL,height=280)
-    card(fig_g)
+    sec("📊 Índice de Qualificação (pesos IQCD: Doutor 5 · Mestre 3 · Especialista 2 · Graduado 1)")
+    def gauge(valor, titulo):
+        fig = go.Figure(go.Indicator(
+            mode="gauge+number",value=valor,
+            number={"suffix":" / 5","font":{"size":40,"color":P}},
+            title={"text":titulo,"font":{"size":14}},
+            gauge={"axis":{"range":[0,5],"tickwidth":1,"tickcolor":P},
+                   "bar":{"color":P,"thickness":0.25},"bgcolor":"white",
+                   "borderwidth":2,"bordercolor":BD,
+                   "steps":[{"range":[0,1],"color":"#F0F4FA"},{"range":[1,2],"color":"#C5D9F0"},
+                             {"range":[2,3],"color":"#5A9AD4"},{"range":[3,4],"color":"#1A5FA8"},
+                             {"range":[4,5],"color":P}]},
+        ))
+        fig.update_layout(**BL,height=280)
+        return fig
+    g1,g2 = st.columns(2)
+    with g1:
+        if iqcd_doc is not None: card(gauge(iqcd_doc, "<b>Docentes</b> · IQCD"))
+        else: st.info("Nenhum docente nos filtros selecionados.")
+    with g2:
+        if iqcd_tec is not None: card(gauge(iqcd_tec, "<b>Técnicos</b> · mesma escala (referência)"))
+        else: st.info("Nenhum técnico nos filtros selecionados.")
+    st.caption("Docentes e técnicos são calculados separadamente: os perfis de titulação "
+               "das duas carreiras não são comparáveis. O IQCD oficial se aplica apenas a docentes.")
 
 with tab2:
     sec("🗺️ Distribuição por Campus")
@@ -716,12 +759,18 @@ with tab4:
     st.dataframe(stats,use_container_width=True,hide_index=True)
 
 with tab5:
-    sec("⚠️ Desvio de Lotação (Oficial ≠ Vinculada)")
+    sec("⚠️ Desvio de Lotação (campus oficial ≠ campus vinculado)")
+    st.caption("Compara o campus das duas lotações. Registros em que uma das lotações não "
+               "indica um campus específico (ex.: \"Coordenação Acadêmica - CORDAC\", "
+               "\"Universidade Federal do Tocantins\") entram como **Não avaliável**.")
     d1,d2 = st.columns([1,2])
     with d1:
-        dv = pct(df_f["DESVIO"].map({True:"Com desvio",False:"Sem desvio"}),"Status")
+        status = np.select([~df_f["DESVIO_AVAL"], df_f["DESVIO"]],
+                           ["Não avaliável","Com desvio"], default="Sem desvio")
+        dv = pct(pd.Series(status),"Status")
         fig = px.pie(dv,names="Status",values="Qtd",hole=0.58,height=320,
-                     color="Status",color_discrete_map={"Com desvio":AL,"Sem desvio":VD})
+                     color="Status",color_discrete_map={"Com desvio":AL,"Sem desvio":VD,
+                                                        "Não avaliável":BD})
         fig.update_traces(texttemplate="<b>%{label}</b><br>%{value:,} (%{percent:.1%})",
                           textposition="outside",textfont_size=12)
         fig.update_layout(**BL)
@@ -729,7 +778,8 @@ with tab5:
     with d2:
         dc = (df_f[df_f["DESVIO"]].groupby("CAMPUS").size()
               .reset_index(name="Com Desvio")
-              .merge(df_f.groupby("CAMPUS").size().reset_index(name="Total"),on="CAMPUS"))
+              .merge(df_f[df_f["DESVIO_AVAL"]].groupby("CAMPUS").size()
+                     .reset_index(name="Total"),on="CAMPUS"))
         dc["% Desvio"] = (dc["Com Desvio"]/dc["Total"]*100).round(1)
         dc = dc.sort_values("% Desvio",ascending=True)
         fig = px.bar(dc,x="% Desvio",y="CAMPUS",orientation="h",
@@ -738,8 +788,10 @@ with tab5:
                      labels={"CAMPUS":"Campus","% Desvio":"% com Desvio"})
         fig.update_traces(texttemplate="%{text}%",textposition="outside",textfont_size=11)
         fig.update_layout(**BL,coloraxis_showscale=False,
-                          xaxis=dict(range=[0,115],showgrid=True,gridcolor="#EEF2F8"))
-        card(fig)
+                          xaxis=dict(range=[0,max(dc["% Desvio"].max()*1.3,1)],
+                                     showgrid=True,gridcolor="#EEF2F8"))
+        if dc.empty: st.info("Nenhum desvio de lotação nos filtros selecionados.")
+        else: card(fig)
 
     sec("🚪 Forma de Ingresso & Carga Horária")
     i1,i2,i3 = st.columns(3)
@@ -788,7 +840,7 @@ with tab6:
 
     if busca:
         mask = df_exib.apply(
-            lambda col: col.astype(str).str.upper().str.contains(busca.upper(),na=False)
+            lambda col: col.astype(str).str.upper().str.contains(busca.upper(),na=False,regex=False)
         ).any(axis=1)
         df_exib = df_exib[mask]
         st.caption(f"🔎 {len(df_exib):,} resultado(s) para '{busca}'")
@@ -798,11 +850,13 @@ with tab6:
     with c1:
         st.download_button(
             "⬇️ Baixar Base Filtrada (.csv)",
-            data=(df_f.drop(columns=["DT_NASC","DESVIO","FAIXA"],errors="ignore")
+            data=(df_f.drop(columns=["DT_NASC","DESVIO","DESVIO_AVAL","FAIXA"],errors="ignore")
                       .to_csv(index=False).encode("utf-8")),
             file_name="base_filtrada_uft.csv",
             mime="text/csv",
             use_container_width=True,
         )
     with c2:
-        st.info(f"📁 `perfil.xlsx` · {total:,} registros filtrados")
+        dup = df_raw.attrs.get("duplicados", 0)
+        st.info(f"📁 `perfil.xlsx` · {total:,} registros filtrados"
+                + (f" · {dup} linhas duplicadas removidas" if dup else ""))
