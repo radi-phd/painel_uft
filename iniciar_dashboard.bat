@@ -2,6 +2,6 @@
 
 cd /d %~dp0
 
-py -m streamlit run dashboard.py
+py -m streamlit run pai.py
 
 pause
