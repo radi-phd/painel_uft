@@ -4,6 +4,7 @@
 # ============================================================
 
 import asyncio, sys, os
+import base64
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -29,20 +30,20 @@ st.set_page_config(
 # Cores extraídas diretamente do brasão oficial da UFT:
 # ============================================================
 
-P   = "#003C78"   # AZUL UFT  — faixa horizontal do brasão (cor principal)
-S   = "#002856"   # AZUL ESCURO — versão mais escura para degradês
-A   = "#005A9E"   # AZUL MÉDIO — botões e destaques azuis
-D   = "#F0B41E"   # DOURADO UFT — raios do sol no brasão (cor de destaque)
-VD  = "#007878"   # VERDE-TEAL UFT — escudo inferior do brasão
-CZ  = "#787878"   # CINZA UFT — letras UFT no brasão
-BN  = "#1E1E1E"   # ESCURO — banner "UNIVERSIDADE FEDERAL DO TOCANTINS"
+P   = "#002B49"   # NAVY UFT — identidade principal
+S   = "#0A2540"   # NAVY ESCURO — sidebar e superfícies profundas
+A   = "#0369A1"   # AZUL — destaques e gráficos
+D   = "#F3A61E"   # DOURADO — acento institucional
+VD  = "#008566"   # VERDE UFT — estados positivos
+CZ  = "#64748B"   # SLATE — textos auxiliares
+BN  = "#0F172A"   # SLATE ESCURO — texto de alto contraste
 
 # Cores de apoio (interface)
-FG  = "#F4F6F9"   # FUNDO — cinza levíssimo das páginas
-BD  = "#DDE3EC"   # BORDA — linhas e separadores
-TL  = "#5A6A8A"   # TEXTO LEVE — subtítulos e labels
-AL  = "#C0392B"   # ALERTA — vermelho para avisos
-OK  = "#007878"   # SUCESSO — reutiliza o verde-teal da UFT
+FG  = "#F4F6F9"   # FUNDO — superfície clara do dashboard
+BD  = "#E2E8F0"   # BORDA — linhas e separadores
+TL  = "#64748B"   # TEXTO LEVE — subtítulos e labels
+AL  = "#DC2626"   # ALERTA — vermelho para avisos
+OK  = "#009E73"   # SUCESSO — verde de confirmação
 
 # ▲▲▲ FIM DA SEÇÃO DE CORES ▲▲▲
 
@@ -73,65 +74,477 @@ LOGO_PATH = next(
 )
 
 # ============================================================
-# ▼▼▼ CSS GLOBAL — ALTERE AQUI PARA MUDAR ESTILOS ▼▼▼
-#
-# As variáveis {P}, {S}, {D} etc. são as cores definidas acima.
-# Cada bloco CSS tem comentário explicando o que ele estiliza.
+# CSS GLOBAL — tokens visuais derivados do protótipo Stitch
 # ============================================================
-st.markdown(f"""
+st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
-/* ── Página geral ───────────────────────────────────────── */
-html, body {{ font-family:'DM Sans',sans-serif; color:{P}; }}
-.main {{ background:{FG}; padding-top:.3rem; }}
+:root {
+    --uft-navy: #002B49;
+    --uft-navy-dark: #0A2540;
+    --uft-navy-input: #001A30;
+    --uft-green: #008566;
+    --uft-green-light: #009E73;
+    --uft-yellow: #F3A61E;
+    --uft-surface: #F4F6F9;
+    --uft-border: #E2E8F0;
+    --uft-muted: #64748B;
+    --uft-text: #0F172A;
+}
 
-/* ── BARRA LATERAL — cor de fundo e textos ──────────────── */
-/* Para mudar a cor da sidebar, altere as variáveis {P} e {S}
-   na seção PALETA acima. O gradiente vai de P (topo) a S (base). */
-[data-testid="stSidebar"] {{
-    background: linear-gradient(175deg, {P} 0%, {S} 100%);
-}}
-[data-testid="stSidebar"] * {{ color: white !important; }}
-[data-testid="stSidebar"] label {{
-    font-size: .7rem; font-weight: 600;
-    letter-spacing: .06em; text-transform: uppercase; opacity: .8;
-}}
-[data-testid="stSidebar"] p {{
-    font-size: .65rem; opacity: .45;
-    letter-spacing: .1em; text-transform: uppercase; margin: 0;
-}}
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+    color: var(--uft-text);
+}
 
-/* ── KPI Cards ──────────────────────────────────────────── */
-.krow  {{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }}
-.kc    {{ background:white; border:1px solid {BD}; border-radius:12px;
-          padding:13px 12px 9px; flex:1; min-width:140px; position:relative; }}
-.kc-bar {{ position:absolute; top:0; left:0; right:0;
-           height:3px; border-radius:12px 12px 0 0; }}
-.kc-ico {{ font-size:1.15rem; margin-bottom:2px; }}
-.kc-val {{ font-family:'Lora',serif; font-size:1.6rem;
-           font-weight:700; color:{P}; line-height:1.1; }}
-.kc-lbl {{ font-size:.63rem; font-weight:700; letter-spacing:.07em;
-           text-transform:uppercase; color:{TL}; }}
-.kc-sub {{ font-size:.61rem; color:{TL}; margin-top:1px; }}
+.stApp {
+    background: var(--uft-surface);
+}
 
-/* ── Card de gráfico ────────────────────────────────────── */
-.card {{ background:white; border:1px solid {BD}; border-radius:12px;
-         padding:15px 15px 5px;
-         box-shadow:0 1px 6px rgba(0,60,120,.06); margin-bottom:11px; }}
+[data-testid="stAppViewContainer"] > .main {
+    background: var(--uft-surface);
+    padding-top: .5rem;
+}
 
-/* ── Título de seção ────────────────────────────────────── */
-/* A borda inferior dourada usa {D} — mude {D} acima para outra cor */
-.sec {{ font-family:'Lora',serif; font-size:.93rem; font-weight:700;
-        color:{P}; padding-bottom:5px;
-        border-bottom:2px solid {D}; margin:18px 0 11px; }}
+[data-testid="stHeader"] {
+    background: transparent;
+}
 
-/* ── Faixa dourada decorativa (topo da sidebar) ─────────── */
-.sidebar-stripe {{
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, var(--uft-navy) 0%, var(--uft-navy-dark) 100%);
+    border-right: 1px solid rgba(255,255,255,.08);
+}
+
+[data-testid="stSidebar"] > div:first-child {
+    background: linear-gradient(180deg, var(--uft-navy) 0%, var(--uft-navy-dark) 100%);
+}
+
+[data-testid="stSidebar"] [data-testid="stImage"] {
+    margin-inline: auto;
+}
+
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
+    color: #CBD5E1;
+}
+
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+    color: #CBD5E1 !important;
+    font-size: .78rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+[data-testid="stSidebar"] [data-baseweb="select"] > div,
+[data-testid="stSidebar"] input {
+    background: var(--uft-navy-input) !important;
+    border-color: rgba(148,163,184,.35) !important;
+    color: #F8FAFC !important;
+    border-radius: 8px !important;
+}
+
+[data-testid="stSidebar"] [data-baseweb="tag"],
+[data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="tag"] {
+    background: var(--uft-green) !important;
+    border-color: rgba(255,255,255,.15) !important;
+    color: #FFFFFF !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] {
+    background: #001730;
+    border: 1px solid #263C53;
+    border-radius: 8px;
+    margin-bottom: 0;
+    overflow: hidden;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] summary {
+    background: transparent !important;
+    color: #F8FAFC !important;
+    font-size: .78rem;
+    font-weight: 700;
+    padding: 12px 10px !important;
+    gap: 8px;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
+    background: #15344D !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] summary::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    background: center / contain no-repeat;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] summary p {
+    font-size: .76rem !important;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] summary > span:has([data-testid="stIconMaterial"]) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] summary > span > span:has([data-testid="stIconMaterial"]) {
+    order: 2;
+    margin-left: auto;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] summary:focus-visible {
+    outline: 2px solid #F3A61E;
+    outline-offset: -3px;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] {
+    border-top: 1px solid #263C53;
+    padding: 10px !important;
+    background: rgba(15,23,42,.45);
+}
+
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    gap: .65rem;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] [data-testid="stVerticalBlock"] {
+    gap: .15rem;
+}
+
+[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.uft-filter-marker),
+[data-testid="stSidebar"] [data-testid="element-container"]:has(.uft-filter-marker) {
+    display: none;
+}
+
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label {
+    width: 100%;
+    padding: 5px 6px;
+    border-radius: 5px;
+    align-items: center;
+}
+
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:hover {
+    background: rgba(148,163,184,.10);
+}
+
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:not(:has(input[role="switch"])) > div:first-of-type {
+    background: #001730;
+    border: 1px solid #64748B;
+    border-radius: 4px;
+}
+
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:not(:has(input[role="switch"])):has(input:checked) > div:first-of-type {
+    background: var(--uft-green);
+    border-color: #34D399;
+}
+
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label p,
+[data-testid="stSidebar"] [data-testid="stToggle"] label p {
+    color: #E2E8F0 !important;
+    font-size: .76rem !important;
+    line-height: 1.4;
+}
+
+[data-testid="stSidebar"] [data-testid="stToggle"] label,
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]) {
+    padding: 8px 6px;
+    background: #152E45;
+    border: 1px solid #3B5065;
+    border-radius: 8px;
+    width: 100%;
+    gap: 5px;
+}
+
+[data-testid="stSidebar"] [data-testid="stToggle"] label:has(input:checked),
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked) {
+    background: #005D50;
+    border-color: #008566;
+}
+
+[data-testid="stSidebar"] [data-testid="stToggle"] label:has(input:checked) > div:first-of-type,
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked) > div:first-of-type {
+    background: #009E73 !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
+    gap: 8px;
+}
+
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"]) {
+    flex-wrap: nowrap !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"]) > :is([data-testid="stColumn"], [data-testid="column"]) {
+    flex: 1 1 0 !important;
+    width: calc(50% - 4px) !important;
+    min-width: 0 !important;
+}
+
+[data-testid="stSidebar"] .uft-filter-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #CBD5E1;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .065em;
+    text-transform: uppercase;
+    margin: 12px 0 2px;
+}
+
+.uft-filter-heading svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+[data-testid="stSidebar"] .uft-filter-divider {
+    border-top: 1px solid #334155;
+    padding-top: 16px;
+    margin: 12px 0 4px;
+    color: #94A3B8;
+    font-size: .64rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpander"] summary p,
+[data-testid="stSidebar"] [data-testid="stExpander"] summary span {
+    color: #F8FAFC !important;
+}
+
+.sidebar-stripe {
     height: 3px;
-    background: linear-gradient(90deg, {D} 0%, {VD} 100%);
+    background: linear-gradient(90deg, var(--uft-yellow) 0%, var(--uft-green-light) 100%);
     margin: 0 -1rem .8rem;
-}}
+    border-radius: 999px;
+}
+
+.uft-brand {
+    text-align: center;
+    padding: 10px 8px 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(226,232,240,.14);
+}
+
+.uft-brand-title {
+    color: #FFFFFF;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.uft-brand-subtitle {
+    color: #6EE7B7;
+    font-size: .68rem;
+    font-weight: 600;
+    margin-top: 3px;
+}
+
+.uft-header-anchor + div [data-testid="stHorizontalBlock"] {
+    align-items: center !important;
+    background: #FFFFFF;
+    border: 1px solid var(--uft-border);
+    border-top: 4px solid var(--uft-yellow);
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(15,23,42,.07);
+    padding: 10px 18px;
+    position: sticky;
+    top: .5rem;
+    z-index: 20;
+}
+
+.uft-header-title {
+    color: var(--uft-navy);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.16rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+}
+
+.uft-header-meta {
+    color: var(--uft-muted);
+    font-size: .72rem;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.uft-header-meta strong {
+    color: var(--uft-green);
+}
+
+.header-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.count-pill,
+.access-pill {
+    border-radius: 999px;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 7px 11px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.count-pill {
+    background: linear-gradient(90deg, var(--uft-navy), #0D3868);
+    color: #FFFFFF;
+}
+
+.access-pill {
+    background: #FFFFFF;
+    border: 1px solid var(--uft-border);
+    color: var(--uft-muted);
+}
+
+.uft-header-stripe {
+    background: linear-gradient(90deg, var(--uft-yellow), var(--uft-green-light));
+    border-radius: 0 0 6px 6px;
+    height: 3px;
+    margin-bottom: 14px;
+}
+
+.krow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.kc {
+    background: #FFFFFF;
+    border: 1px solid rgba(226,232,240,.95);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(15,23,42,.04);
+    flex: 1;
+    min-width: 138px;
+    padding: 12px 13px 10px;
+    position: relative;
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+
+.kc:hover {
+    box-shadow: 0 6px 18px rgba(15,23,42,.09);
+    transform: translateY(-1px);
+}
+
+.kc-bar {
+    border-radius: 12px 12px 0 0;
+    height: 4px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.kc-ico {
+    font-size: 1.05rem;
+    margin-bottom: 5px;
+}
+
+.kc-val {
+    color: var(--uft-text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.42rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.kc-lbl {
+    color: var(--uft-muted);
+    font-size: .61rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    margin-top: 3px;
+    text-transform: uppercase;
+}
+
+.kc-sub {
+    color: #94A3B8;
+    font-size: .61rem;
+    margin-top: 2px;
+}
+
+.card {
+    background: #FFFFFF;
+    border: 1px solid var(--uft-border);
+    border-radius: 12px;
+    box-shadow: 0 2px 9px rgba(15,23,42,.045);
+    margin-bottom: 12px;
+    padding: 14px 14px 5px;
+}
+
+.sec {
+    border-bottom: 2px solid var(--uft-yellow);
+    color: var(--uft-navy);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: .9rem;
+    font-weight: 800;
+    margin: 20px 0 12px;
+    padding-bottom: 6px;
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    background: #FFFFFF;
+    border: 1px solid var(--uft-border);
+    border-radius: 10px;
+    gap: 4px;
+    padding: 4px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 7px;
+    color: var(--uft-muted);
+    font-size: .73rem;
+    font-weight: 700;
+    padding: 8px 11px;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #E8F5F1;
+    color: var(--uft-green) !important;
+}
+
+[data-testid="stDataFrame"] {
+    border: 1px solid var(--uft-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+[data-testid="stDownloadButton"] button {
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .uft-header-anchor + div [data-testid="stHorizontalBlock"] {
+        padding: 8px 12px;
+        position: static;
+    }
+    .uft-header-title { font-size: 1rem; }
+    .header-actions { justify-content: flex-start; margin-top: 6px; }
+    .kc { min-width: 125px; }
+}
+
+@media (max-width: 600px) {
+    [data-testid="stAppViewContainer"] > .main { padding-top: .2rem; }
+    .krow { gap: 7px; }
+    .kc { min-width: calc(50% - 7px); }
+    .stTabs [data-baseweb="tab"] { font-size: .66rem; padding: 7px 6px; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -140,7 +553,11 @@ html, body {{ font-family:'DM Sans',sans-serif; color:{P}; }}
 # ============================================================
 def card(fig):
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"displaylogo": False, "responsive": True},
+    )
     st.markdown("</div>", unsafe_allow_html=True)
 
 def sec(t):
@@ -300,9 +717,9 @@ if erro:
 # sem filtro CSS. Funciona localmente e no Streamlit Cloud.
 # Para centralizar a imagem usamos 3 colunas dentro da sidebar.
 if LOGO_PATH:
-    sb1, sb2, sb3 = st.sidebar.columns([1, 2, 1])
+    sb1, sb2, sb3 = st.sidebar.columns([1.5, 1.4, 1.5])
     with sb2:
-        st.image(LOGO_PATH, use_container_width=True)
+        st.image(LOGO_PATH, width=78)
 else:
     st.sidebar.markdown(
         '<div style="text-align:center;font-size:2.4rem;padding:.5rem 0;">🎓</div>',
@@ -320,64 +737,109 @@ else:
 st.sidebar.markdown(f"""
 <div class="sidebar-stripe"></div>
 
-<div style="
-    background: rgba(255,255,255,0.10);
-    border: 1px solid rgba(240,180,30,0.40);
-    border-top: 3px solid {D};
-    border-radius: 10px;
-    padding: 10px 12px 8px;
-    margin: 0 0 6px;
-    text-align: center;
-">
-  <div style="font-family:'Lora',serif;font-size:.98rem;font-weight:700;
-              color:white;letter-spacing:.04em;">
-    · PROGRAD ·
-  </div>
-  <div style="font-size:.63rem;color:{D};margin-top:3px;
-              letter-spacing:.05em;font-weight:500;">
+<div class="uft-brand">
+  <div class="uft-brand-title">PROGRAD</div>
+  <div class="uft-brand-subtitle">Pró-Reitoria de Graduação</div>
+  <div style="font-size:.64rem;color:#CBD5E1;margin-top:5px;">
     Coordenação de Avaliação e Educação
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("Categoria & Sexo")
-cat_sel  = st.sidebar.multiselect("Categoria",["DOCENTE","TÉCNICO"],
-                                   default=["DOCENTE","TÉCNICO"])
-sexo_sel = st.sidebar.multiselect("Sexo",
-               sorted(df_raw["SEXO"].dropna().unique()),
-               default=sorted(df_raw["SEXO"].dropna().unique()))
+# Ícones vetoriais locais, com o mesmo traço e acentos do protótipo.
+# Não dependem de Font Awesome, fontes de ícones ou conexão externa.
+FILTER_ICONS = {
+    "category": ('#F3A61E', '<circle cx="9" cy="7" r="4"/><path d="M2 21v-3a7 7 0 0 1 12-5m3 1 2-2 3 3-2 2m-6 1 5-5 3 3-5 5-4 1z"/>'),
+    "gender": ('#A5B4FC', '<circle cx="8" cy="9" r="4"/><path d="M8 13v8m-3-3h6m2-7 7-7m-5 0h5v5"/>'),
+    "qualification": ('#F3A61E', '<circle cx="12" cy="8" r="5"/><path d="m8 12-2 9 6-3 6 3-2-9"/>'),
+    "workload": ('#38BDF8', '<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>'),
+    "status": ('#34D399', '<rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 2h6v4H9zM9 17h6"/><circle cx="12" cy="11" r="2"/>'),
+    "legal": ('#C4B5FD', '<path d="M12 3v18M4 21h16M3 7h18M6 7l-4 8h8L6 7zm12 0-4 8h8l-4-8z"/>'),
+    "entry": ('#FB923C', '<path d="M14 4h6v16h-6M3 12h12m-4-4 4 4-4 4"/>'),
+    "campus": ('#38BDF8', '<path d="m3 9 9-6 9 6H3zm2 3v7m5-7v7m4-7v7m5-7v7M2 22h20"/>'),
+}
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("Campus / Lotação")
-campus_sel = st.sidebar.multiselect("Campus",
-               sorted(df_raw["CAMPUS"].dropna().unique()),
-               default=sorted(df_raw["CAMPUS"].dropna().unique()))
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("Situação Funcional")
-sit_opts = sorted(df_raw["SITUAÇÃO"].dropna().unique())
-# Padrão: só servidores ativos. A base inclui desligados ("Sem Vínculo"),
-# aposentados e redistribuídos, que distorcem totais e médias.
-sit_sel = st.sidebar.multiselect("Situação", sit_opts,
-               default=[s for s in sit_opts if s.upper() == "ATIVO"] or sit_opts)
+def filter_icon(name):
+    color, paths = FILTER_ICONS[name]
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
+            f'fill="none" stroke="{color}" stroke-width="1.7" '
+            f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+            f'{paths}</svg>')
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("Qualificação")
+
+icon_rules = []
+for icon_name in FILTER_ICONS:
+    icon_data = base64.b64encode(filter_icon(icon_name).encode()).decode()
+    icon_rules.append(
+        '[data-testid="stSidebar"] [data-testid="stExpander"]'
+        f':has(.uft-filter-{icon_name}) summary::before '
+        f'{{background-image:url("data:image/svg+xml;base64,{icon_data}");}}'
+    )
+st.sidebar.markdown('<style>' + '\n'.join(icon_rules) + '</style>', unsafe_allow_html=True)
+
+
+def toggle_filters(title, column, options, icon, labels=None):
+    """Seleção independente: ambas as opções podem estar ligadas ou desligadas."""
+    st.sidebar.markdown(
+        f'<div class="uft-filter-heading">{filter_icon(icon)}{title}</div>',
+        unsafe_allow_html=True,
+    )
+    selected = []
+    columns = st.sidebar.columns(2)
+    for index, option in enumerate(options):
+        label = (labels or {}).get(str(option).upper(), str(option))
+        with columns[index % 2]:
+            if st.toggle(label, value=True, key=f"uft_filter_{column}_{option}"):
+                selected.append(option)
+    return selected
+
+
+def checkbox_filters(title, column, icon, options=None, default=None, expanded=False):
+    """Retorna os valores originais da base, mantendo o contrato dos filtros."""
+    if options is None:
+        options = sorted(df_raw[column].dropna().unique())
+    defaults = set(options if default is None else default)
+    selected = []
+    with st.sidebar.expander(title, expanded=expanded):
+        st.markdown(
+            f'<span class="uft-filter-marker uft-filter-{icon}"></span>',
+            unsafe_allow_html=True,
+        )
+        for option in options:
+            label = str(option)
+            if label.isupper():
+                label = label.capitalize()
+            if st.checkbox(label, value=option in defaults,
+                           key=f"uft_filter_{column}_{option}"):
+                selected.append(option)
+    return selected
+
+
+cat_sel = toggle_filters(
+    "Categoria funcional", "CATEGORIA", ["DOCENTE", "TÉCNICO"], "category",
+    {"DOCENTE": "Docente", "TÉCNICO": "Técnico"},
+)
+sexo_sel = toggle_filters(
+    "Sexo / Gênero", "SEXO", sorted(df_raw["SEXO"].dropna().unique()), "gender",
+    {"M": "Masculino", "F": "Feminino", "MASCULINO": "Masculino", "FEMININO": "Feminino"},
+)
+
+st.sidebar.markdown('<div class="uft-filter-divider">Filtros avançados</div>',
+                    unsafe_allow_html=True)
 tit_opts = [t for t in ORDEM_TIT if t in df_raw["TIT_GRUPO"].values]
-tit_sel  = st.sidebar.multiselect("Titulação", tit_opts, default=tit_opts)
-reg_sel  = st.sidebar.multiselect("Regime Jurídico",
-               sorted(df_raw["REGIME_JURIDICO"].dropna().unique()),
-               default=sorted(df_raw["REGIME_JURIDICO"].dropna().unique()))
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("Carga & Ingresso")
-carga_sel = st.sidebar.multiselect("Carga Horária",
-               sorted(df_raw["CARGA_GRUPO"].dropna().unique()),
-               default=sorted(df_raw["CARGA_GRUPO"].dropna().unique()))
-ing_sel   = st.sidebar.multiselect("Ingresso",
-               sorted(df_raw["INGRESSO_GRUPO"].dropna().unique()),
-               default=sorted(df_raw["INGRESSO_GRUPO"].dropna().unique()))
+tit_sel = checkbox_filters("Qualificação e titulação", "TIT_GRUPO", "qualification",
+                           options=tit_opts, expanded=True)
+carga_sel = checkbox_filters("Carga horária / Regime", "CARGA_GRUPO", "workload")
+sit_opts = sorted(df_raw["SITUAÇÃO"].dropna().unique())
+# Mantém o padrão anterior: somente ativos, se essa situação existir na base.
+sit_sel = checkbox_filters("Situação funcional", "SITUAÇÃO", "status",
+                           options=sit_opts,
+                           default=[s for s in sit_opts if s.upper() == "ATIVO"] or sit_opts)
+reg_sel = checkbox_filters("Regime jurídico", "REGIME_JURIDICO", "legal")
+ing_sel = checkbox_filters("Forma de ingresso", "INGRESSO_GRUPO", "entry")
+campus_sel = checkbox_filters("Campus universitário", "CAMPUS", "campus")
+st.sidebar.caption("Marque as opções desejadas. Os indicadores são atualizados automaticamente.")
 
 # ============================================================
 # FILTROS
@@ -429,50 +891,13 @@ idade_s  = f"{idade_v:.1f} a" if pd.notna(idade_v) else "—"
 # A logo aparece à esquerda (se disponível) ou um emoji.
 # ============================================================
 # =================================================================
-# HEADER PRINCIPAL
-# -----------------------------------------------------------------
-# Estrutura: CSS injeta o gradiente de fundo via classe .uft-header
-# Layout:    st.columns([1,7,2]) — logo | título | badge
-# Logo:      st.image() carrega o arquivo direto (sem base64)
-# Título:    st.markdown() com HTML simples (sem imagens)
-#
-# Para mudar as cores do fundo, edite H_TOPO e H_BASE abaixo.
-# Para mudar o título, edite a string dentro de st.markdown().
+# HEADER PRINCIPAL — composição inspirada na tela do Stitch
 # =================================================================
+st.markdown('<div class="uft-header-anchor" style="display:none;"></div>',
+            unsafe_allow_html=True)
 
-H_TOPO  = "#EDF4FF"   # azul UFT muito claro (deriva de #003C78)
-H_BASE  = "#FFFBF0"   # creme dourado muito claro (deriva de #F0B41E)
-H_BORDA = "#C8DDF5"   # borda azul suave
-
-# ── Injeta CSS que estiliza apenas o bloco de colunas do header ──
-# O div invisível .uft-header-anchor serve de marcador;
-# o CSS ~ seleciona o próximo stHorizontalBlock.
-st.markdown(f"""
-<style>
-/* Aplica o fundo gradiente SOMENTE nas colunas do header */
-.uft-header-anchor + div [data-testid="stHorizontalBlock"] {{
-    background  : linear-gradient(135deg, {H_TOPO} 0%, {H_BASE} 100%);
-    border-radius : 14px;
-    border        : 1px solid {H_BORDA};
-    border-top    : 4px solid {D};
-    padding       : 8px 20px;
-    box-shadow    : 0 3px 14px rgba(0,60,120,.10);
-    margin-bottom : 4px;
-    align-items   : center !important;
-}}
-/* Faixa decorativa dourado → teal logo abaixo do header */
-.uft-header-stripe {{
-    height: 3px;
-    background: linear-gradient(90deg, {D} 0%, {VD} 100%);
-    border-radius: 0 0 6px 6px;
-    margin-bottom: 16px;
-}}
-</style>
-<div class="uft-header-anchor" style="display:none;"></div>
-""", unsafe_allow_html=True)
-
-# ── Colunas do header: [logo | título | badge] ───────────────
-col_logo, col_titulo, col_badge = st.columns([1, 7, 2])
+# ── Colunas do header: [logo | título | ações] ───────────────
+col_logo, col_titulo, col_badge = st.columns([0.8, 6.2, 3])
 
 with col_logo:
     if LOGO_PATH:
@@ -485,24 +910,20 @@ with col_logo:
         )
 
 with col_titulo:
-    st.markdown(f"""
-<div style="padding:6px 0 4px;">
-  <div style="font-family:'Lora',serif;font-size:1.4rem;
-              font-weight:700;color:{P};letter-spacing:.01em;">
-    Painel Docentes e Técnicos
-  </div>
-  <div style="font-size:.82rem;color:{VD};margin-top:4px;font-weight:500;">
-    Universidade Federal do Tocantins · Gestão Estratégica de Pessoas
+    st.markdown("""
+<div style="padding:4px 0;">
+  <div class="uft-header-title">Painel Docentes e Técnicos</div>
+  <div class="uft-header-meta">
+    Universidade Federal do Tocantins · <strong>Gestão Estratégica de Pessoas &amp; PROGRAD</strong>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
 with col_badge:
     st.markdown(f"""
-<div style="background:{P};color:white;padding:7px 14px;border-radius:17px;
-            font-size:.74rem;font-weight:700;letter-spacing:.04em;
-            text-align:center;margin-top:10px;">
-  📊 {total:,} registros
+<div class="header-actions">
+  <div class="count-pill">👥 {total:,} registros filtrados</div>
+  <div class="access-pill">🔒 Acesso Restrito · Entrar</div>
 </div>
 """, unsafe_allow_html=True)
 
