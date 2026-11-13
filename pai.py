@@ -5,6 +5,7 @@
 
 import asyncio, sys, os
 import base64
+from datetime import datetime
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -13,6 +14,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from header_menu import align_sidebar_open_button
 
 st.set_page_config(
     page_title="PROGRAD · UFT",
@@ -60,15 +62,13 @@ BL = dict(
 )
 
 # ============================================================
-# CAMINHO DA LOGO — sem base64, sem data: URI
-# Coloque logo_uft.jpg (ou .png) na mesma pasta que servidores.py.
-# st.image() e st.sidebar.image() carregam o arquivo diretamente.
-# Funciona no terminal local e no Streamlit Cloud.
+# Logo transparente da UFT, com o arquivo anterior como alternativa.
+# Fonte: https://docs.uft.edu.br/share/s/CyCn0-KpTCyWT5x_P-qHvQ
 # ============================================================
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = next(
     (os.path.join(BASE_DIR, n)
-     for n in ["logo_uft.jpg", "logo_uft.png", "images.jpg"]
+     for n in ["logo_uft.png", "logo_uft.jpg", "images.jpg"]
      if os.path.exists(os.path.join(BASE_DIR, n))),
     None   # None se nenhum arquivo encontrado → exibe emoji
 )
@@ -107,8 +107,88 @@ html, body, [class*="css"] {
     padding-top: .5rem;
 }
 
+[data-testid="stMainBlockContainer"],
+[data-testid="stAppViewBlockContainer"] {
+    padding-top: 0 !important;
+}
+
 [data-testid="stHeader"] {
     background: transparent;
+    pointer-events: none;
+}
+
+/* Mantém os controles nativos do Streamlit utilizáveis sobre o cabeçalho. */
+[data-testid="stExpandSidebarButton"],
+[data-testid="collapsedControl"] button {
+    pointer-events: auto;
+}
+
+[data-testid="stHeader"] [data-testid="stToolbarActions"],
+[data-testid="stHeader"] [data-testid="stAppDeployButton"],
+[data-testid="stHeader"] [data-testid="stDeployButton"],
+[data-testid="stHeader"] [data-testid="stDecoration"],
+[data-testid="stHeader"] [data-testid="stMainMenu"] {
+    display: none;
+}
+
+[data-testid="stExpandSidebarButton"],
+[data-testid="collapsedControl"] button,
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="stSidebarContent"] > div:first-child > button {
+    align-items: center;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    display: inline-flex;
+    height: 36px;
+    justify-content: center;
+    width: 36px;
+}
+
+[data-testid="stExpandSidebarButton"],
+[data-testid="collapsedControl"] button {
+    background: #F1F5F9;
+    color: #334155;
+}
+
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="stSidebarContent"] > div:first-child > button {
+    background: #152E45;
+    border-color: #3B5065;
+    color: #E2E8F0;
+}
+
+[data-testid="stSidebarCollapseButton"] {
+    visibility: visible !important;
+}
+
+[data-testid="stExpandSidebarButton"] > span,
+[data-testid="collapsedControl"] button > span,
+[data-testid="collapsedControl"] button > svg,
+[data-testid="stSidebarCollapseButton"] button > span,
+[data-testid="stSidebarContent"] > div:first-child > button > svg {
+    display: none;
+}
+
+[data-testid="stExpandSidebarButton"]::after,
+[data-testid="collapsedControl"] button::after {
+    content: "☰";
+    content: "☰" / "Abrir menu de filtros";
+    font: 20px/1 sans-serif;
+}
+
+[data-testid="stSidebarCollapseButton"] button::after,
+[data-testid="stSidebarContent"] > div:first-child > button::after {
+    content: "☰";
+    content: "☰" / "Fechar menu de filtros";
+    font: 20px/1 sans-serif;
+}
+
+[data-testid="stExpandSidebarButton"]:focus-visible,
+[data-testid="collapsedControl"] button:focus-visible,
+[data-testid="stSidebarCollapseButton"] button:focus-visible,
+[data-testid="stSidebarContent"] > div:first-child > button:focus-visible {
+    outline: 2px solid var(--uft-yellow);
+    outline-offset: 2px;
 }
 
 [data-testid="stSidebar"] {
@@ -120,8 +200,47 @@ html, body, [class*="css"] {
     background: linear-gradient(180deg, var(--uft-navy) 0%, var(--uft-navy-dark) 100%);
 }
 
+[data-testid="stSidebarHeader"],
+[data-testid="stSidebarContent"] > div:first-child:has(> button) {
+    background: var(--uft-navy);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+[data-testid="stSidebarContent"] > div:first-child:has(> button) {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 16px;
+}
+
+[data-testid="stSidebarContent"]:has(> div:first-child > button) [data-testid="stSidebarUserContent"] {
+    padding-top: 24px;
+}
+
+[data-testid="stSidebar"] [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]) {
+    display: flex;
+    justify-content: center;
+}
+
+[data-testid="stSidebar"] [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]) [data-testid="stElementToolbar"] {
+    display: none !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stImage"]) {
+    display: flex;
+    justify-content: center;
+}
+
 [data-testid="stSidebar"] [data-testid="stImage"] {
     margin-inline: auto;
+    width: fit-content;
+}
+
+[data-testid="stSidebar"] [data-testid="stImage"] img[src$=".png"] {
+    /* Versão negativa para contraste no fundo escuro, sem fundo branco. */
+    filter: brightness(0) invert(1);
+    max-width: 100%;
 }
 
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
@@ -138,7 +257,7 @@ html, body, [class*="css"] {
 }
 
 [data-testid="stSidebar"] [data-baseweb="select"] > div,
-[data-testid="stSidebar"] input {
+[data-testid="stSidebar"] input:not([type="checkbox"]):not([type="radio"]) {
     background: var(--uft-navy-input) !important;
     border-color: rgba(148,163,184,.35) !important;
     color: #F8FAFC !important;
@@ -235,14 +354,16 @@ html, body, [class*="css"] {
     background: rgba(148,163,184,.10);
 }
 
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:not(:has(input[role="switch"])) > div:first-of-type {
-    background: #001730;
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCheckbox"] label:has(> span > input) > div:first-of-type,
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCheckbox"] label:has(> input) > span:first-child {
+    background-color: #001730;
     border: 1px solid #64748B;
     border-radius: 4px;
 }
 
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:not(:has(input[role="switch"])):has(input:checked) > div:first-of-type {
-    background: var(--uft-green);
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCheckbox"] label:has(> span > input:checked) > div:first-of-type,
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCheckbox"] label:has(> input:checked) > span:first-child {
+    background-color: var(--uft-green);
     border-color: #34D399;
 }
 
@@ -254,7 +375,8 @@ html, body, [class*="css"] {
 }
 
 [data-testid="stSidebar"] [data-testid="stToggle"] label,
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]) {
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]),
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stCheckbox"] label {
     padding: 8px 6px;
     background: #152E45;
     border: 1px solid #3B5065;
@@ -264,13 +386,15 @@ html, body, [class*="css"] {
 }
 
 [data-testid="stSidebar"] [data-testid="stToggle"] label:has(input:checked),
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked) {
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked),
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stCheckbox"] label:has(input:checked) {
     background: #005D50;
     border-color: #008566;
 }
 
 [data-testid="stSidebar"] [data-testid="stToggle"] label:has(input:checked) > div:first-of-type,
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked) > div:first-of-type {
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked) > div:first-of-type,
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stCheckbox"] label:has(input:checked) > div:first-of-type {
     background: #009E73 !important;
 }
 
@@ -278,11 +402,11 @@ html, body, [class*="css"] {
     gap: 8px;
 }
 
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"]) {
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"], [data-testid="stCheckbox"]) {
     flex-wrap: nowrap !important;
 }
 
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"]) > :is([data-testid="stColumn"], [data-testid="column"]) {
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"], [data-testid="stCheckbox"]) > :is([data-testid="stColumn"], [data-testid="column"]) {
     flex: 1 1 0 !important;
     width: calc(50% - 4px) !important;
     min-width: 0 !important;
@@ -348,23 +472,68 @@ html, body, [class*="css"] {
     margin-top: 3px;
 }
 
-.uft-header-anchor + div [data-testid="stHorizontalBlock"] {
-    align-items: center !important;
+.uft-header-marker { display: none; }
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) {
     background: #FFFFFF;
-    border: 1px solid var(--uft-border);
-    border-top: 4px solid var(--uft-yellow);
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(15,23,42,.07);
-    padding: 10px 18px;
+    border-bottom: 1px solid var(--uft-border);
+    box-shadow: 0 3px 12px rgba(15,23,42,.06);
+    container-type: inline-size;
+    padding: 16px 14px 16px 52px;
     position: sticky;
-    top: .5rem;
-    z-index: 20;
+    top: 0;
+    z-index: 100;
+}
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    [data-testid="stVerticalBlock"] {
+    gap: 0;
+}
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    [data-testid="stHorizontalBlock"] {
+    align-items: center;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 36px minmax(0, max-content) auto minmax(0, 1fr) auto;
+    grid-template-areas: "icon title year count login";
+}
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    :is([data-testid="stColumn"], [data-testid="column"]) {
+    min-width: 0;
+    width: auto !important;
+}
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(1) { grid-area: icon; }
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(2) { grid-area: title; }
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(3) { grid-area: year; justify-self: end; }
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(4) { grid-area: count; justify-self: end; }
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(5) { grid-area: login; justify-self: end; }
+
+.uft-header-icon {
+    align-items: center;
+    background: var(--uft-navy);
+    border-radius: 8px;
+    color: #FFFFFF;
+    display: inline-flex;
+    flex: 0 0 36px;
+    height: 36px;
+    width: 36px;
+    justify-content: center;
+}
+
+[data-testid="stHorizontalBlock"]:has(.uft-header-icon) [data-testid="stMarkdownContainer"] {
+    margin-bottom: 0 !important;
+}
+[data-testid="stHorizontalBlock"]:has(.uft-header-icon) [data-testid="stMarkdownContainer"] p {
+    margin: 0 !important;
 }
 
 .uft-header-title {
     color: var(--uft-navy);
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.16rem;
+    font-size: 1rem;
     font-weight: 800;
     letter-spacing: -.02em;
     line-height: 1.2;
@@ -374,47 +543,52 @@ html, body, [class*="css"] {
     color: var(--uft-muted);
     font-size: .72rem;
     font-weight: 500;
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
 .uft-header-meta strong {
     color: var(--uft-green);
 }
 
-.header-actions {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-.count-pill,
-.access-pill {
+.uft-year-pill {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
     border-radius: 999px;
-    font-size: .68rem;
+    color: var(--uft-navy);
+    font-size: .67rem;
     font-weight: 700;
-    padding: 7px 11px;
-    text-align: center;
-    white-space: nowrap;
+    padding: 2px 8px;
+    display: inline-block;
 }
 
 .count-pill {
     background: linear-gradient(90deg, var(--uft-navy), #0D3868);
+    border-radius: 999px;
     color: #FFFFFF;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 7px 10px;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.access-pill {
-    background: #FFFFFF;
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    [data-testid="stButton"] button {
+    background: #F1F5F9;
     border: 1px solid var(--uft-border);
-    color: var(--uft-muted);
+    border-radius: 8px;
+    color: #475569;
+    font-size: .72rem;
+    font-weight: 700;
+    min-height: 34px;
+    padding: 5px 10px;
+    white-space: nowrap;
 }
 
-.uft-header-stripe {
-    background: linear-gradient(90deg, var(--uft-yellow), var(--uft-green-light));
-    border-radius: 0 0 6px 6px;
-    height: 3px;
-    margin-bottom: 14px;
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    [data-testid="stButton"] button p {
+    font-size: inherit;
+    line-height: 1;
 }
 
 .krow {
@@ -530,17 +704,37 @@ html, body, [class*="css"] {
 }
 
 @media (max-width: 900px) {
-    .uft-header-anchor + div [data-testid="stHorizontalBlock"] {
-        padding: 8px 12px;
-        position: static;
-    }
-    .uft-header-title { font-size: 1rem; }
-    .header-actions { justify-content: flex-start; margin-top: 6px; }
     .kc { min-width: 125px; }
+}
+
+@container (max-width: 700px) {
+    [data-testid="stHorizontalBlock"]:has(.uft-header-icon) {
+        grid-template-columns: 36px minmax(0, 1fr) auto !important;
+        grid-template-areas: "icon title year" "count count login" !important;
+        gap: 12px 10px !important;
+    }
+    [data-testid="stHorizontalBlock"]:has(.uft-header-icon) > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(4) {
+        justify-self: start !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    body:has([data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHorizontalBlock"]:has(.uft-header-icon) {
+        grid-template-columns: 36px minmax(0, 1fr) auto !important;
+        grid-template-areas: "icon title year" "count count login" !important;
+        gap: 12px 10px !important;
+    }
+    body:has([data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHorizontalBlock"]:has(.uft-header-icon) > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(4) {
+        justify-self: start !important;
+    }
 }
 
 @media (max-width: 600px) {
     [data-testid="stAppViewContainer"] > .main { padding-top: .2rem; }
+    .uft-header-title { font-size: .9rem; }
+    .uft-header-meta { font-size: .65rem; }
+    .uft-header-icon { height: 36px; }
+    .count-pill { font-size: .62rem; padding: 6px 8px; width: fit-content; }
     .krow { gap: 7px; }
     .kc { min-width: calc(50% - 7px); }
     .stTabs [data-baseweb="tab"] { font-size: .66rem; padding: 7px 6px; }
@@ -713,13 +907,8 @@ if erro:
 # ============================================================
 
 # ── Logo na sidebar ──────────────────────────────────────────
-# st.sidebar.image() carrega o arquivo direto — sem base64,
-# sem filtro CSS. Funciona localmente e no Streamlit Cloud.
-# Para centralizar a imagem usamos 3 colunas dentro da sidebar.
 if LOGO_PATH:
-    sb1, sb2, sb3 = st.sidebar.columns([1.5, 1.4, 1.5])
-    with sb2:
-        st.image(LOGO_PATH, width=78)
+    st.sidebar.image(LOGO_PATH, width=150)
 else:
     st.sidebar.markdown(
         '<div style="text-align:center;font-size:2.4rem;padding:.5rem 0;">🎓</div>',
@@ -855,6 +1044,34 @@ df_f = df_raw[
     df_raw["INGRESSO_GRUPO"].isin(ing_sel)
 ].copy()
 
+# Cabeçalho disponível também quando os filtros não retornam registros.
+total = len(df_f)
+total_formatado = f"{total:,}".replace(",", ".")
+with st.container():
+    st.markdown('<div class="uft-header-marker" aria-hidden="true"></div>',
+                unsafe_allow_html=True)
+    col_icone, col_titulo, col_ano, col_badge, col_entrar = st.columns([1, 6, 1, 3, 1.5])
+    with col_icone:
+        st.markdown('<span class="uft-header-icon" aria-hidden="true">◔</span>',
+                    unsafe_allow_html=True)
+    with col_titulo:
+        st.markdown("""
+<div>
+    <div class="uft-header-title">Painel Docentes e Técnicos</div>
+    <div class="uft-header-meta">Universidade Federal do Tocantins · <strong>PROGRAD</strong></div>
+</div>
+""", unsafe_allow_html=True)
+    with col_ano:
+        st.markdown(f'<span class="uft-year-pill">{datetime.now().year}</span>',
+                    unsafe_allow_html=True)
+    with col_badge:
+        st.markdown(f'<div class="count-pill">👥 {total_formatado} registros filtrados</div>',
+                    unsafe_allow_html=True)
+    with col_entrar:
+        if st.button("🔒 Entrar", key="uft_entrar"):
+            st.toast("O acesso restrito está em desenvolvimento.")
+    align_sidebar_open_button()
+
 if df_f.empty:
     st.warning("⚠️ Nenhum registro com os filtros selecionados.")
     st.stop()
@@ -862,7 +1079,6 @@ if df_f.empty:
 # ============================================================
 # KPIs
 # ============================================================
-total    = len(df_f)
 docentes = (df_f["CATEGORIA"] == "DOCENTE").sum()
 tecnicos = (df_f["CATEGORIA"] == "TÉCNICO").sum()
 ativos   = (df_f["SITUAÇÃO"].str.upper() == "ATIVO").sum()
@@ -882,53 +1098,6 @@ iqcd_tec = iqcd(df_f[df_f["CATEGORIA"] == "TÉCNICO"])
 iqcd_s   = f"{iqcd_doc:.2f}/5" if iqcd_doc is not None else "—"
 idade_v  = df_f["IDADE"].mean()
 idade_s  = f"{idade_v:.1f} a" if pd.notna(idade_v) else "—"
-
-# ============================================================
-# ▼▼▼ HEADER — Altere aqui a cor/estilo do título principal ▼▼▼
-#
-# background: usa as variáveis P, S e D da paleta acima.
-# Para mudar o fundo do cabeçalho, troque P, S ou D.
-# A logo aparece à esquerda (se disponível) ou um emoji.
-# ============================================================
-# =================================================================
-# HEADER PRINCIPAL — composição inspirada na tela do Stitch
-# =================================================================
-st.markdown('<div class="uft-header-anchor" style="display:none;"></div>',
-            unsafe_allow_html=True)
-
-# ── Colunas do header: [logo | título | ações] ───────────────
-col_logo, col_titulo, col_badge = st.columns([0.8, 6.2, 3])
-
-with col_logo:
-    if LOGO_PATH:
-        # st.image() lê o arquivo diretamente — sem base64 nem data: URI
-        st.image(LOGO_PATH, width=76)
-    else:
-        st.markdown(
-            '<div style="font-size:3rem;text-align:center;padding-top:4px;">🎓</div>',
-            unsafe_allow_html=True
-        )
-
-with col_titulo:
-    st.markdown("""
-<div style="padding:4px 0;">
-  <div class="uft-header-title">Painel Docentes e Técnicos</div>
-  <div class="uft-header-meta">
-    Universidade Federal do Tocantins · <strong>Gestão Estratégica de Pessoas &amp; PROGRAD</strong>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-with col_badge:
-    st.markdown(f"""
-<div class="header-actions">
-  <div class="count-pill">👥 {total:,} registros filtrados</div>
-  <div class="access-pill">🔒 Acesso Restrito · Entrar</div>
-</div>
-""", unsafe_allow_html=True)
-
-# Faixa decorativa abaixo das colunas
-st.markdown('<div class="uft-header-stripe"></div>', unsafe_allow_html=True)
 
 # ============================================================
 # KPI CARDS
