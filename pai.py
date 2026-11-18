@@ -429,7 +429,7 @@ html, body, [class*="css"] {
 [data-testid="stSidebar"] .uft-filter-divider {
     border-top: 1px solid #334155;
     padding-top: 16px;
-    margin: 12px 0 4px;
+    margin: 12px 0 13px;
     color: #94A3B8;
     font-size: .64rem;
     font-weight: 700;
@@ -591,32 +591,42 @@ html, body, [class*="css"] {
     line-height: 1;
 }
 
-.krow {
-    display: flex;
-    flex-wrap: wrap;
+.kpi-dashboard {
+    container-type: inline-size;
+    padding-bottom: 16px;
+}
+
+.krow,
+.krow-secondary {
+    display: grid;
     gap: 10px;
-    margin-bottom: 18px;
+}
+
+.krow {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.krow-secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 16px;
 }
 
 .kc {
-    background: #FFFFFF;
-    border: 1px solid rgba(226,232,240,.95);
+    background: #F8FAFC;
+    border: 1px solid var(--uft-border);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(15,23,42,.04);
-    flex: 1;
-    min-width: 138px;
-    padding: 12px 13px 10px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 112px;
+    overflow: hidden;
+    padding: 14px 12px 11px;
     position: relative;
-    transition: box-shadow .2s ease, transform .2s ease;
-}
-
-.kc:hover {
-    box-shadow: 0 6px 18px rgba(15,23,42,.09);
-    transform: translateY(-1px);
 }
 
 .kc-bar {
-    border-radius: 12px 12px 0 0;
+    background: var(--uft-navy);
     height: 4px;
     left: 0;
     position: absolute;
@@ -624,32 +634,72 @@ html, body, [class*="css"] {
     top: 0;
 }
 
+.kc-heading {
+    align-items: center;
+    display: flex;
+    gap: 7px;
+    margin-bottom: 10px;
+    min-height: 19px;
+}
+
 .kc-ico {
-    font-size: 1.05rem;
-    margin-bottom: 5px;
+    color: #111111;
+    display: inline-flex;
+    flex: 0 0 14px;
+    height: 14px;
+    width: 14px;
+}
+
+.kc-ico svg {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.kc-lbl {
+    color: #334155;
+    font-size: 1 rem;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 .kc-val {
     color: var(--uft-text);
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.42rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    line-height: 1.15;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+    margin-top: auto;
 }
 
-.kc-lbl {
+.kc-unit {
     color: var(--uft-muted);
-    font-size: .61rem;
-    font-weight: 800;
-    letter-spacing: .06em;
-    margin-top: 3px;
-    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: 0;
 }
 
 .kc-sub {
-    color: #94A3B8;
-    font-size: .61rem;
-    margin-top: 2px;
+    color: var(--uft-muted);
+    font-size: .65rem;
+    line-height: 1.35;
+    margin-top: 4px;
+}
+
+.kc-wide {
+    min-height: 100px;
+}
+
+@container (max-width: 850px) {
+    .krow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .krow .kc:last-child { grid-column: span 2; }
+}
+
+@container (max-width: 500px) {
+    .krow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .krow-secondary { grid-template-columns: minmax(0, 1fr); }
 }
 
 .card {
@@ -671,25 +721,69 @@ html, body, [class*="css"] {
     padding-bottom: 6px;
 }
 
-.stTabs [data-baseweb="tab-list"] {
+.stTabs [role="tablist"] {
     background: #FFFFFF;
     border: 1px solid var(--uft-border);
-    border-radius: 10px;
-    gap: 4px;
-    padding: 4px;
+    border-radius: 12px;
+    gap: 2px;
+    overflow-x: auto;
+    padding: 6px 6px 0;
+    scrollbar-width: thin;
 }
 
-.stTabs [data-baseweb="tab"] {
-    border-radius: 7px;
-    color: var(--uft-muted);
-    font-size: .73rem;
+.stTabs [role="tab"] {
+    align-items: center;
+    border-bottom: 2px solid transparent;
+    border-radius: 7px 7px 0 0;
+    color: #475569;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: .74rem;
+    font-weight: 500;
+    gap: 8px;
+    padding: 10px 12px;
+}
+
+.stTabs [role="tab"]::before {
+    background-color: #94A3B8;
+    content: "";
+    flex: 0 0 14px;
+    height: 14px;
+    mask: var(--tab-icon) center / contain no-repeat;
+    width: 14px;
+}
+
+.stTabs [role="tab"] p {
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.stTabs [role="tab"]:hover {
+    color: var(--uft-navy);
+}
+
+.stTabs [role="tab"][aria-selected="true"] {
+    background: #F1F6FB;
+    border-bottom-color: var(--uft-navy);
+    color: var(--uft-navy) !important;
     font-weight: 700;
-    padding: 8px 11px;
 }
 
-.stTabs [aria-selected="true"] {
-    background: #E8F5F1;
-    color: var(--uft-green) !important;
+.stTabs [role="tab"][aria-selected="true"]::before {
+    background-color: var(--uft-navy);
+}
+
+.stTabs [data-baseweb="tab-highlight"],
+.stTabs [data-baseweb="tab-border"],
+.stTabs .react-aria-SelectionIndicator {
+    display: none;
+}
+
+.stTabs [role="tab"]:focus-visible {
+    outline: 2px solid var(--uft-navy);
+    outline-offset: -2px;
 }
 
 [data-testid="stDataFrame"] {
@@ -701,10 +795,6 @@ html, body, [class*="css"] {
 [data-testid="stDownloadButton"] button {
     border-radius: 8px;
     font-weight: 700;
-}
-
-@media (max-width: 900px) {
-    .kc { min-width: 125px; }
 }
 
 @container (max-width: 700px) {
@@ -735,9 +825,8 @@ html, body, [class*="css"] {
     .uft-header-meta { font-size: .65rem; }
     .uft-header-icon { height: 36px; }
     .count-pill { font-size: .62rem; padding: 6px 8px; width: fit-content; }
-    .krow { gap: 7px; }
-    .kc { min-width: calc(50% - 7px); }
-    .stTabs [data-baseweb="tab"] { font-size: .66rem; padding: 7px 6px; }
+    .krow, .krow-secondary { gap: 8px; }
+    .stTabs [role="tab"] { font-size: .7rem; padding: 9px 10px; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -757,11 +846,59 @@ def card(fig):
 def sec(t):
     st.markdown(f'<div class="sec">{t}</div>', unsafe_allow_html=True)
 
-def kpi(ico, val, lbl, cor, sub=""):
-    s = f'<div class="kc-sub">{sub}</div>' if sub else ""
-    return (f'<div class="kc"><div class="kc-bar" style="background:{cor}"></div>'
-            f'<div class="kc-ico">{ico}</div><div class="kc-val">{val}</div>'
-            f'<div class="kc-lbl">{lbl}</div>{s}</div>')
+# Silhuetas locais para os indicadores e a navegação; não dependem de fontes externas.
+BODY_ICONS = {
+    "people": '<circle cx="12" cy="7" r="3"/><circle cx="5" cy="9" r="2.3"/><circle cx="19" cy="9" r="2.3"/><path d="M6 20v-2a6 6 0 0 1 12 0v2H6zm-5-1v-1a4 4 0 0 1 4-4c.7 0 1.3.2 1.9.5A8 8 0 0 0 4 19H1zm19 0a8 8 0 0 0-2.9-4.5c.6-.3 1.2-.5 1.9-.5a4 4 0 0 1 4 4v1h-3z"/>',
+    "teacher": '<path d="M3 3h18v12h-9v-2h7V5H5v4H3V3z"/><circle cx="7" cy="11" r="2.5"/><path d="M2 21v-3a5 5 0 0 1 9-3l3-2 1 1.5-4.5 3L9 16v5H2z"/>',
+    "tools": '<path d="M22 4a6 6 0 0 1-7.4 7.5L6 20.1A2.2 2.2 0 0 1 2.9 17l8.6-8.6A6 6 0 0 1 19 1l-3.2 3.2.5 3.5 3.5.5L22 4z"/><path d="m3 2 4 1 2 3-2 2-3-2-1-4zm7 9 3 3-1.5 1.5-3-3L10 11zm4 4 7 6-2 2-6-7 1-1z"/>',
+    "check": '<path d="m1 12 2-2 4 4L17 4l2 2L7 18 1 12zm8 5 2 2L23 7l-2-2L9 17z"/>',
+    "graduation": '<path d="M12 3 1 8l11 5 9-4.1V16h2V8L12 3zm-7 9v4.5C5 19 8.1 21 12 21s7-2 7-4.5V12l-7 3.2L5 12z"/>',
+    "book": '<path d="M5 2h13a2 2 0 0 1 2 2v16H7a2 2 0 0 0-2 2H3V5a3 3 0 0 1 2-3zm2 2v12.5c.6-.3 1.3-.5 2-.5h9V4H7zm4 1h4v7l-2-1.5-2 1.5V5zM7 18h13v4H7a2 2 0 0 1 0-4z"/>',
+    "star": '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.2-6.2 3.2L7 14.2 2 9.3l6.9-1L12 2z"/>',
+    "cake": '<path d="M6 2h2v4H6V2zm5 0h2v4h-2V2zm5 0h2v4h-2V2zM4 8h16a2 2 0 0 1 2 2v3c-1 0-1.5 1-2.5 1s-1.5-1-2.5-1-1.5 1-2.5 1-1.5-1-2.5-1-1.5 1-2.5 1-1.5-1-2.5-1-1.5 1-2.5 1S3 13 2 13v-3a2 2 0 0 1 2-2zM2 15c1 0 1.5 1 2.5 1s1.5-1 2.5-1 1.5 1 2.5 1 1.5-1 2.5-1 1.5 1 2.5 1 1.5-1 2.5-1 1.5 1 2.5 1S21 15 22 15v5H2v-5zm-1 6h22v2H1v-2z"/>',
+    "warning": '<path fill-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 6h2v6h-2V8zm0 8h2v2h-2v-2z"/>',
+    "building": '<path d="M12 2 1 7v2h22V7L12 2zM3 10h3v8H3v-8zm5 0h3v8H8v-8zm5 0h3v8h-3v-8zm5 0h3v8h-3v-8zM2 19h20v3H2v-3z"/>',
+    "scale": '<path d="M11 2h2v3h8v2h-2l4 8c0 2-1.8 3-4 3s-4-1-4-3l4-8h-6v12h4v2H7v-2h4V7H5l4 8c0 2-1.8 3-4 3s-4-1-4-3l4-8H3V5h8V2zM3.5 14h3L5 10.5 3.5 14zm14 0h3L19 10.5 17.5 14z"/>',
+    "chart": '<path d="M3 3h2v16h16v2H3V3zm4 12 4-5 3 2 5-6 2 1.5-6.5 8-3-2L9 17l-2-2z"/>',
+    "file": '<path d="M5 2h9l5 5v15H5V2zm8 2v4h4l-4-4zM8 11v2h8v-2H8zm0 4v2h8v-2H8zm0 4v1h6v-1H8z"/>',
+}
+
+
+def body_icon(name):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
+            f'fill="currentColor" aria-hidden="true">{BODY_ICONS[name]}</svg>')
+
+
+def kpi(ico, val, lbl, sub="", unit="", wide=False):
+    subtitle = f'<div class="kc-sub">{sub}</div>' if sub else ""
+    suffix = f' <span class="kc-unit">{unit}</span>' if unit else ""
+    classes = "kc kc-wide" if wide else "kc"
+    return (f'<div class="{classes}"><div class="kc-bar"></div>'
+            f'<div class="kc-heading"><span class="kc-ico">{body_icon(ico)}</span>'
+            f'<span class="kc-lbl">{lbl}</span></div>'
+            f'<div class="kc-val">{val}{suffix}</div>{subtitle}</div>')
+
+
+def numero_pt(valor):
+    return f"{valor:,}".replace(",", ".")
+
+
+def decimal_pt(valor, casas=1):
+    return f"{valor:.{casas}f}".replace(".", ",")
+
+
+TAB_ICONS = ("graduation", "building", "scale", "chart", "warning", "file")
+tab_icon_rules = []
+for index, icon_name in enumerate(TAB_ICONS, start=1):
+    icon_data = base64.b64encode(body_icon(icon_name).encode()).decode()
+    tab_icon_rules.append(
+        f'.stTabs [role="tab"]:nth-of-type({index}) '
+        f'{{--tab-icon:url("data:image/svg+xml;base64,{icon_data}");}}'
+    )
+tab_icon_rules.append(
+    '.stTabs [role="tab"]:nth-of-type(5):not([aria-selected="true"])::before '
+    '{background-color:#D97706;}'
+)
 
 def pct(serie, nome="Valor"):
     ct = serie.value_counts().reset_index()
@@ -1086,7 +1223,7 @@ dout_pd  = df_f["TIT_GRUPO"].isin(["Doutorado","Pós-Doutorado"]).sum()
 mestres  = (df_f["TIT_GRUPO"] == "Mestrado").sum()
 desvios  = int(df_f["DESVIO"].sum())
 n_aval   = int(df_f["DESVIO_AVAL"].sum())
-pct_desv = round(desvios / max(n_aval,1) * 100, 1)
+pct_desv = round(desvios / n_aval * 100, 1) if n_aval else None
 
 def iqcd(d):
     """Média ponderada da titulação (pesos IQCD). None se não houver registros."""
@@ -1095,25 +1232,35 @@ def iqcd(d):
 
 iqcd_doc = iqcd(df_f[df_f["CATEGORIA"] == "DOCENTE"])
 iqcd_tec = iqcd(df_f[df_f["CATEGORIA"] == "TÉCNICO"])
-iqcd_s   = f"{iqcd_doc:.2f}/5" if iqcd_doc is not None else "—"
+iqcd_s   = decimal_pt(iqcd_doc, 2) if iqcd_doc is not None else "—"
 idade_v  = df_f["IDADE"].mean()
-idade_s  = f"{idade_v:.1f} a" if pd.notna(idade_v) else "—"
+idade_s  = decimal_pt(idade_v) if pd.notna(idade_v) else "—"
+desvio_s = f"{decimal_pt(pct_desv)}%" if pct_desv is not None else "—"
+desvio_sub = (
+    f"{numero_pt(desvios)} {'caso' if desvios == 1 else 'casos'} em "
+    f"{numero_pt(n_aval)} servidores avaliáveis"
+    if n_aval else "Nenhum servidor com lotação avaliável"
+)
 
 # ============================================================
 # KPI CARDS
 # ============================================================
 st.markdown(
-    '<div class="krow">'
-    + kpi("👥", f"{total:,}",      "Total",         P)
-    + kpi("🏫", f"{docentes:,}",   "Docentes",      A,  f"{docentes/max(total,1)*100:.1f}%")
-    + kpi("🔧", f"{tecnicos:,}",   "Técnicos",      D,  f"{tecnicos/max(total,1)*100:.1f}%")
-    + kpi("✅", f"{ativos:,}",     "Ativos",        VD, f"{ativos/max(total,1)*100:.1f}%")
-    + kpi("🎓", f"{dout_pd:,}",    "Doutores/PD",   D,  f"{dout_pd/max(total,1)*100:.1f}%")
-    + kpi("📚", f"{mestres:,}",    "Mestres",       A,  f"{mestres/max(total,1)*100:.1f}%")
-    + kpi("⭐", iqcd_s,            "IQCD Docente",  VD, "pesos INEP")
-    + kpi("🎂", idade_s,           "Idade Média",   A)
-    + kpi("⚠️", f"{pct_desv}%",   "Desvio Lot.",   AL, f"{desvios:,} de {n_aval:,} avaliáveis")
-    + '</div>',
+    '<style>' + '\n'.join(tab_icon_rules) + '</style>'
+    + '<section class="kpi-dashboard" aria-label="Indicadores do quadro filtrado">'
+    + '<div class="krow">'
+    + kpi("people", numero_pt(total), "Total", "Servidores filtrados")
+    + kpi("teacher", numero_pt(docentes), "Docentes", f"{decimal_pt(docentes / total * 100)}% do quadro")
+    + kpi("tools", numero_pt(tecnicos), "Técnicos", f"{decimal_pt(tecnicos / total * 100)}% do quadro")
+    + kpi("check", numero_pt(ativos), "Ativos", f"{decimal_pt(ativos / total * 100)}% do quadro")
+    + kpi("graduation", numero_pt(dout_pd), "Doutores / PD", f"{decimal_pt(dout_pd / total * 100)}% do quadro")
+    + kpi("book", numero_pt(mestres), "Mestres", f"{decimal_pt(mestres / total * 100)}% do quadro")
+    + kpi("star", iqcd_s, "IQCD Docente", "Pesos oficiais INEP", unit="/ 5,0" if iqcd_doc is not None else "")
+    + '</div><div class="krow-secondary">'
+    + kpi("cake", idade_s, "Média Etária Institucional", "Média das idades informadas no quadro filtrado",
+          unit="anos" if pd.notna(idade_v) else "", wide=True)
+    + kpi("warning", desvio_s, "Desvio de Lotação Observado", desvio_sub, wide=True)
+    + '</div></section>',
     unsafe_allow_html=True
 )
 
@@ -1121,9 +1268,9 @@ st.markdown(
 # ABAS
 # ============================================================
 tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs([
-    "🎓 Qualificação","🏢 Lotação & Campus",
-    "⚖️ Regime & Situação","📈 Perfil Etário",
-    "⚠️ Desvio & Ingresso","📄 Tabela & Download",
+    "Qualificação & Titulação", "Lotação & Campus",
+    "Regime & Situação", "Perfil Etário",
+    "Desvio & Ingresso", "Tabela & Download",
 ])
 
 with tab1:
