@@ -15,6 +15,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from header_menu import align_sidebar_open_button
+from qualification import qualification_dashboard
 
 st.set_page_config(
     page_title="PROGRAD · UFT",
@@ -1165,7 +1166,7 @@ sit_sel = checkbox_filters("Situação funcional", "SITUAÇÃO", "status",
 reg_sel = checkbox_filters("Regime jurídico", "REGIME_JURIDICO", "legal")
 ing_sel = checkbox_filters("Forma de ingresso", "INGRESSO_GRUPO", "entry")
 campus_sel = checkbox_filters("Campus universitário", "CAMPUS", "campus")
-st.sidebar.caption("Marque as opções desejadas. Os indicadores são atualizados automaticamente.")
+
 
 # ============================================================
 # FILTROS
@@ -1231,7 +1232,6 @@ def iqcd(d):
     return round(d["TIT_GRUPO"].astype(str).map(PESOS_TIT).fillna(0).mean(), 2)
 
 iqcd_doc = iqcd(df_f[df_f["CATEGORIA"] == "DOCENTE"])
-iqcd_tec = iqcd(df_f[df_f["CATEGORIA"] == "TÉCNICO"])
 iqcd_s   = decimal_pt(iqcd_doc, 2) if iqcd_doc is not None else "—"
 idade_v  = df_f["IDADE"].mean()
 idade_s  = decimal_pt(idade_v) if pd.notna(idade_v) else "—"
@@ -1274,75 +1274,11 @@ tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs([
 ])
 
 with tab1:
-    sec("🎓 Titulação por Categoria")
-    c1,c2 = st.columns([3,2])
-    with c1:
-        tg = df_f.groupby(["TIT_GRUPO","CATEGORIA"]).size().reset_index(name="Qtd")
-        tg["TIT_GRUPO"] = pd.Categorical(tg["TIT_GRUPO"],categories=ORDEM_TIT,ordered=True)
-        fig = px.bar(tg.sort_values("TIT_GRUPO"),x="Qtd",y="TIT_GRUPO",color="CATEGORIA",
-                     orientation="h",barmode="stack",height=380,text_auto=True,
-                     color_discrete_map={"DOCENTE":P,"TÉCNICO":D},
-                     labels={"TIT_GRUPO":"Titulação","Qtd":"Quantidade"})
-        fig.update_layout(**BL,legend=dict(orientation="h",y=-0.18,font_size=12),
-                          xaxis=dict(showgrid=True,gridcolor="#EEF2F8"))
-        card(fig)
-    with c2:
-        sd = pct(df_f["SEXO"].map({"M":"Masculino","F":"Feminino"}).fillna(df_f["SEXO"]),"Sexo")
-        fig = px.pie(sd,names="Sexo",values="Qtd",hole=0.58,height=380,
-                     color_discrete_sequence=[P,D])
-        fig.update_traces(texttemplate="<b>%{label}</b><br>%{value:,} (%{percent:.1%})",
-                          textposition="outside",textfont_size=12)
-        fig.update_layout(**BL)
-        card(fig)
-
-    sec("💼 Top 15 Cargos")
-    tc1,tc2 = st.columns(2)
-    with tc1:
-        st.caption("**Técnico-Administrativos**")
-        ct = pct(df_f[df_f["CATEGORIA"]=="TÉCNICO"]["CARGO"],"Cargo").head(15)
-        fig = px.bar(ct,x="Qtd",y="Cargo",orientation="h",text="Label",
-                     color="Qtd",color_continuous_scale=ESC_OURO,height=480)
-        fig.update_traces(textposition="outside",textfont_size=10)
-        fig.update_layout(**BL,coloraxis_showscale=False,
-                          xaxis=dict(showgrid=True,gridcolor="#F8F4EA",
-                                     range=[0,ct["Qtd"].max()*1.35]))
-        card(fig)
-    with tc2:
-        st.caption("**Docentes**")
-        cd = pct(df_f[df_f["CATEGORIA"]=="DOCENTE"]["CARGO"],"Cargo").head(15)
-        fig = px.bar(cd,x="Qtd",y="Cargo",orientation="h",text="Label",
-                     color="Qtd",color_continuous_scale=ESC_AZUL,height=480)
-        fig.update_traces(textposition="outside",textfont_size=10)
-        fig.update_layout(**BL,coloraxis_showscale=False,
-                          xaxis=dict(showgrid=True,gridcolor="#EEF2F8",
-                                     range=[0,cd["Qtd"].max()*1.35]))
-        card(fig)
-
-    sec("📊 Índice de Qualificação (pesos IQCD: Doutor 5 · Mestre 3 · Especialista 2 · Graduado 1)")
-    def gauge(valor, titulo):
-        fig = go.Figure(go.Indicator(
-            mode="gauge+number",value=valor,
-            number={"suffix":" / 5","font":{"size":40,"color":P}},
-            title={"text":titulo,"font":{"size":14}},
-            gauge={"axis":{"range":[0,5],"tickwidth":1,"tickcolor":P},
-                   "bar":{"color":P,"thickness":0.25},"bgcolor":"white",
-                   "borderwidth":2,"bordercolor":BD,
-                   "steps":[{"range":[0,1],"color":"#F0F4FA"},{"range":[1,2],"color":"#C5D9F0"},
-                             {"range":[2,3],"color":"#5A9AD4"},{"range":[3,4],"color":"#1A5FA8"},
-                             {"range":[4,5],"color":P}]},
-        ))
-        fig.update_layout(**BL,height=280)
-        return fig
-    g1,g2 = st.columns(2)
-    with g1:
-        if iqcd_doc is not None: card(gauge(iqcd_doc, "<b>Docentes</b> · IQCD"))
-        else: st.info("Nenhum docente nos filtros selecionados.")
-    with g2:
-        if iqcd_tec is not None: card(gauge(iqcd_tec, "<b>Técnicos</b> · mesma escala (referência)"))
-        else: st.info("Nenhum técnico nos filtros selecionados.")
-    st.caption("Docentes e técnicos são calculados separadamente: os perfis de titulação "
-               "das duas carreiras não são comparáveis. O IQCD oficial se aplica apenas a docentes.")
-
+    st.markdown(
+        qualification_dashboard(df_f, iqcd_doc, {name: body_icon(name) for name in
+                                ("graduation", "people", "building", "teacher", "star")}),
+        unsafe_allow_html=True,
+    )
 with tab2:
     sec("🗺️ Distribuição por Campus")
     ca1,ca2 = st.columns(2)
