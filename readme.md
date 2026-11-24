@@ -30,7 +30,7 @@ Os dados são carregados a partir do arquivo `perfil.xlsx`, considerando as abas
 
 O painel está organizado nas seguintes abas:
 
-1. **Qualificação** – distribuição da titulação por categoria, composição por sexo, principais cargos e índice de qualificação do corpo docente (IQCD).
+1. **Qualificação** – titulação, composição por sexo, presença nos câmpus e na Reitoria, regime de trabalho docente, IQCD e resumo por unidade e titulação.
 2. **Lotação & Campus** – distribuição por campus, relação entre campus e categoria, titulação por campus e principais unidades de exercício.
 3. **Regime & Situação** – regimes jurídicos, situação funcional e comparações entre docentes e técnicos.
 4. **Perfil Etário** – distribuição de idades, faixas etárias e estatísticas por categoria.
