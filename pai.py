@@ -5,6 +5,7 @@
 
 import asyncio, sys, os
 import base64
+from datetime import datetime
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -13,6 +14,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from header_menu import align_sidebar_open_button
+from qualification import qualification_dashboard
 
 st.set_page_config(
     page_title="PROGRAD · UFT",
@@ -60,15 +63,13 @@ BL = dict(
 )
 
 # ============================================================
-# CAMINHO DA LOGO — sem base64, sem data: URI
-# Coloque logo_uft.jpg (ou .png) na mesma pasta que servidores.py.
-# st.image() e st.sidebar.image() carregam o arquivo diretamente.
-# Funciona no terminal local e no Streamlit Cloud.
+# Logo transparente da UFT, com o arquivo anterior como alternativa.
+# Fonte: https://docs.uft.edu.br/share/s/CyCn0-KpTCyWT5x_P-qHvQ
 # ============================================================
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = next(
     (os.path.join(BASE_DIR, n)
-     for n in ["logo_uft.jpg", "logo_uft.png", "images.jpg"]
+     for n in ["logo_uft.png", "logo_uft.jpg", "images.jpg"]
      if os.path.exists(os.path.join(BASE_DIR, n))),
     None   # None se nenhum arquivo encontrado → exibe emoji
 )
@@ -107,8 +108,88 @@ html, body, [class*="css"] {
     padding-top: .5rem;
 }
 
+[data-testid="stMainBlockContainer"],
+[data-testid="stAppViewBlockContainer"] {
+    padding-top: 0 !important;
+}
+
 [data-testid="stHeader"] {
     background: transparent;
+    pointer-events: none;
+}
+
+/* Mantém os controles nativos do Streamlit utilizáveis sobre o cabeçalho. */
+[data-testid="stExpandSidebarButton"],
+[data-testid="collapsedControl"] button {
+    pointer-events: auto;
+}
+
+[data-testid="stHeader"] [data-testid="stToolbarActions"],
+[data-testid="stHeader"] [data-testid="stAppDeployButton"],
+[data-testid="stHeader"] [data-testid="stDeployButton"],
+[data-testid="stHeader"] [data-testid="stDecoration"],
+[data-testid="stHeader"] [data-testid="stMainMenu"] {
+    display: none;
+}
+
+[data-testid="stExpandSidebarButton"],
+[data-testid="collapsedControl"] button,
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="stSidebarContent"] > div:first-child > button {
+    align-items: center;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    display: inline-flex;
+    height: 36px;
+    justify-content: center;
+    width: 36px;
+}
+
+[data-testid="stExpandSidebarButton"],
+[data-testid="collapsedControl"] button {
+    background: #F1F5F9;
+    color: #334155;
+}
+
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="stSidebarContent"] > div:first-child > button {
+    background: #152E45;
+    border-color: #3B5065;
+    color: #E2E8F0;
+}
+
+[data-testid="stSidebarCollapseButton"] {
+    visibility: visible !important;
+}
+
+[data-testid="stExpandSidebarButton"] > span,
+[data-testid="collapsedControl"] button > span,
+[data-testid="collapsedControl"] button > svg,
+[data-testid="stSidebarCollapseButton"] button > span,
+[data-testid="stSidebarContent"] > div:first-child > button > svg {
+    display: none;
+}
+
+[data-testid="stExpandSidebarButton"]::after,
+[data-testid="collapsedControl"] button::after {
+    content: "☰";
+    content: "☰" / "Abrir menu de filtros";
+    font: 20px/1 sans-serif;
+}
+
+[data-testid="stSidebarCollapseButton"] button::after,
+[data-testid="stSidebarContent"] > div:first-child > button::after {
+    content: "☰";
+    content: "☰" / "Fechar menu de filtros";
+    font: 20px/1 sans-serif;
+}
+
+[data-testid="stExpandSidebarButton"]:focus-visible,
+[data-testid="collapsedControl"] button:focus-visible,
+[data-testid="stSidebarCollapseButton"] button:focus-visible,
+[data-testid="stSidebarContent"] > div:first-child > button:focus-visible {
+    outline: 2px solid var(--uft-yellow);
+    outline-offset: 2px;
 }
 
 [data-testid="stSidebar"] {
@@ -120,8 +201,47 @@ html, body, [class*="css"] {
     background: linear-gradient(180deg, var(--uft-navy) 0%, var(--uft-navy-dark) 100%);
 }
 
+[data-testid="stSidebarHeader"],
+[data-testid="stSidebarContent"] > div:first-child:has(> button) {
+    background: var(--uft-navy);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+[data-testid="stSidebarContent"] > div:first-child:has(> button) {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 16px;
+}
+
+[data-testid="stSidebarContent"]:has(> div:first-child > button) [data-testid="stSidebarUserContent"] {
+    padding-top: 24px;
+}
+
+[data-testid="stSidebar"] [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]) {
+    display: flex;
+    justify-content: center;
+}
+
+[data-testid="stSidebar"] [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]) [data-testid="stElementToolbar"] {
+    display: none !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stImage"]) {
+    display: flex;
+    justify-content: center;
+}
+
 [data-testid="stSidebar"] [data-testid="stImage"] {
     margin-inline: auto;
+    width: fit-content;
+}
+
+[data-testid="stSidebar"] [data-testid="stImage"] img[src$=".png"] {
+    /* Versão negativa para contraste no fundo escuro, sem fundo branco. */
+    filter: brightness(0) invert(1);
+    max-width: 100%;
 }
 
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
@@ -138,7 +258,7 @@ html, body, [class*="css"] {
 }
 
 [data-testid="stSidebar"] [data-baseweb="select"] > div,
-[data-testid="stSidebar"] input {
+[data-testid="stSidebar"] input:not([type="checkbox"]):not([type="radio"]) {
     background: var(--uft-navy-input) !important;
     border-color: rgba(148,163,184,.35) !important;
     color: #F8FAFC !important;
@@ -235,14 +355,16 @@ html, body, [class*="css"] {
     background: rgba(148,163,184,.10);
 }
 
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:not(:has(input[role="switch"])) > div:first-of-type {
-    background: #001730;
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCheckbox"] label:has(> span > input) > div:first-of-type,
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCheckbox"] label:has(> input) > span:first-child {
+    background-color: #001730;
     border: 1px solid #64748B;
     border-radius: 4px;
 }
 
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:not(:has(input[role="switch"])):has(input:checked) > div:first-of-type {
-    background: var(--uft-green);
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCheckbox"] label:has(> span > input:checked) > div:first-of-type,
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCheckbox"] label:has(> input:checked) > span:first-child {
+    background-color: var(--uft-green);
     border-color: #34D399;
 }
 
@@ -254,7 +376,8 @@ html, body, [class*="css"] {
 }
 
 [data-testid="stSidebar"] [data-testid="stToggle"] label,
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]) {
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]),
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stCheckbox"] label {
     padding: 8px 6px;
     background: #152E45;
     border: 1px solid #3B5065;
@@ -264,13 +387,15 @@ html, body, [class*="css"] {
 }
 
 [data-testid="stSidebar"] [data-testid="stToggle"] label:has(input:checked),
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked) {
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked),
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stCheckbox"] label:has(input:checked) {
     background: #005D50;
     border-color: #008566;
 }
 
 [data-testid="stSidebar"] [data-testid="stToggle"] label:has(input:checked) > div:first-of-type,
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked) > div:first-of-type {
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input[role="switch"]:checked) > div:first-of-type,
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="stCheckbox"] label:has(input:checked) > div:first-of-type {
     background: #009E73 !important;
 }
 
@@ -278,11 +403,11 @@ html, body, [class*="css"] {
     gap: 8px;
 }
 
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"]) {
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"], [data-testid="stCheckbox"]) {
     flex-wrap: nowrap !important;
 }
 
-[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"]) > :is([data-testid="stColumn"], [data-testid="column"]) {
+[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:has(input[role="switch"], [data-testid="stCheckbox"]) > :is([data-testid="stColumn"], [data-testid="column"]) {
     flex: 1 1 0 !important;
     width: calc(50% - 4px) !important;
     min-width: 0 !important;
@@ -305,7 +430,7 @@ html, body, [class*="css"] {
 [data-testid="stSidebar"] .uft-filter-divider {
     border-top: 1px solid #334155;
     padding-top: 16px;
-    margin: 12px 0 4px;
+    margin: 12px 0 13px;
     color: #94A3B8;
     font-size: .64rem;
     font-weight: 700;
@@ -348,23 +473,68 @@ html, body, [class*="css"] {
     margin-top: 3px;
 }
 
-.uft-header-anchor + div [data-testid="stHorizontalBlock"] {
-    align-items: center !important;
+.uft-header-marker { display: none; }
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) {
     background: #FFFFFF;
-    border: 1px solid var(--uft-border);
-    border-top: 4px solid var(--uft-yellow);
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(15,23,42,.07);
-    padding: 10px 18px;
+    border-bottom: 1px solid var(--uft-border);
+    box-shadow: 0 3px 12px rgba(15,23,42,.06);
+    container-type: inline-size;
+    padding: 16px 14px 16px 52px;
     position: sticky;
-    top: .5rem;
-    z-index: 20;
+    top: 0;
+    z-index: 100;
+}
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    [data-testid="stVerticalBlock"] {
+    gap: 0;
+}
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    [data-testid="stHorizontalBlock"] {
+    align-items: center;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 36px minmax(0, max-content) auto minmax(0, 1fr) auto;
+    grid-template-areas: "icon title year count login";
+}
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    :is([data-testid="stColumn"], [data-testid="column"]) {
+    min-width: 0;
+    width: auto !important;
+}
+
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(1) { grid-area: icon; }
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(2) { grid-area: title; }
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(3) { grid-area: year; justify-self: end; }
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(4) { grid-area: count; justify-self: end; }
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker)) [data-testid="stHorizontalBlock"] > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(5) { grid-area: login; justify-self: end; }
+
+.uft-header-icon {
+    align-items: center;
+    background: var(--uft-navy);
+    border-radius: 8px;
+    color: #FFFFFF;
+    display: inline-flex;
+    flex: 0 0 36px;
+    height: 36px;
+    width: 36px;
+    justify-content: center;
+}
+
+[data-testid="stHorizontalBlock"]:has(.uft-header-icon) [data-testid="stMarkdownContainer"] {
+    margin-bottom: 0 !important;
+}
+[data-testid="stHorizontalBlock"]:has(.uft-header-icon) [data-testid="stMarkdownContainer"] p {
+    margin: 0 !important;
 }
 
 .uft-header-title {
     color: var(--uft-navy);
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.16rem;
+    font-size: 1rem;
     font-weight: 800;
     letter-spacing: -.02em;
     line-height: 1.2;
@@ -374,75 +544,90 @@ html, body, [class*="css"] {
     color: var(--uft-muted);
     font-size: .72rem;
     font-weight: 500;
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
 .uft-header-meta strong {
     color: var(--uft-green);
 }
 
-.header-actions {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-.count-pill,
-.access-pill {
+.uft-year-pill {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
     border-radius: 999px;
-    font-size: .68rem;
+    color: var(--uft-navy);
+    font-size: .67rem;
     font-weight: 700;
-    padding: 7px 11px;
-    text-align: center;
-    white-space: nowrap;
+    padding: 2px 8px;
+    display: inline-block;
 }
 
 .count-pill {
     background: linear-gradient(90deg, var(--uft-navy), #0D3868);
+    border-radius: 999px;
     color: #FFFFFF;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 7px 10px;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.access-pill {
-    background: #FFFFFF;
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    [data-testid="stButton"] button {
+    background: #F1F5F9;
     border: 1px solid var(--uft-border);
-    color: var(--uft-muted);
+    border-radius: 8px;
+    color: #475569;
+    font-size: .72rem;
+    font-weight: 700;
+    min-height: 34px;
+    padding: 5px 10px;
+    white-space: nowrap;
 }
 
-.uft-header-stripe {
-    background: linear-gradient(90deg, var(--uft-yellow), var(--uft-green-light));
-    border-radius: 0 0 6px 6px;
-    height: 3px;
-    margin-bottom: 14px;
+:is([data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .uft-header-marker), [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .uft-header-marker))
+    [data-testid="stButton"] button p {
+    font-size: inherit;
+    line-height: 1;
+}
+
+.kpi-dashboard {
+    container-type: inline-size;
+    padding-bottom: 16px;
+}
+
+.krow,
+.krow-secondary {
+    display: grid;
+    gap: 10px;
 }
 
 .krow {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 18px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.krow-secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 16px;
 }
 
 .kc {
-    background: #FFFFFF;
-    border: 1px solid rgba(226,232,240,.95);
+    background: #F8FAFC;
+    border: 1px solid var(--uft-border);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(15,23,42,.04);
-    flex: 1;
-    min-width: 138px;
-    padding: 12px 13px 10px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 112px;
+    overflow: hidden;
+    padding: 14px 12px 11px;
     position: relative;
-    transition: box-shadow .2s ease, transform .2s ease;
-}
-
-.kc:hover {
-    box-shadow: 0 6px 18px rgba(15,23,42,.09);
-    transform: translateY(-1px);
 }
 
 .kc-bar {
-    border-radius: 12px 12px 0 0;
+    background: var(--uft-navy);
     height: 4px;
     left: 0;
     position: absolute;
@@ -450,32 +635,72 @@ html, body, [class*="css"] {
     top: 0;
 }
 
+.kc-heading {
+    align-items: center;
+    display: flex;
+    gap: 7px;
+    margin-bottom: 10px;
+    min-height: 19px;
+}
+
 .kc-ico {
-    font-size: 1.05rem;
-    margin-bottom: 5px;
+    color: #111111;
+    display: inline-flex;
+    flex: 0 0 14px;
+    height: 14px;
+    width: 14px;
+}
+
+.kc-ico svg {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.kc-lbl {
+    color: #334155;
+    font-size: 1 rem;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 .kc-val {
     color: var(--uft-text);
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.42rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    line-height: 1.15;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+    margin-top: auto;
 }
 
-.kc-lbl {
+.kc-unit {
     color: var(--uft-muted);
-    font-size: .61rem;
-    font-weight: 800;
-    letter-spacing: .06em;
-    margin-top: 3px;
-    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: 0;
 }
 
 .kc-sub {
-    color: #94A3B8;
-    font-size: .61rem;
-    margin-top: 2px;
+    color: var(--uft-muted);
+    font-size: .65rem;
+    line-height: 1.35;
+    margin-top: 4px;
+}
+
+.kc-wide {
+    min-height: 100px;
+}
+
+@container (max-width: 850px) {
+    .krow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .krow .kc:last-child { grid-column: span 2; }
+}
+
+@container (max-width: 500px) {
+    .krow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .krow-secondary { grid-template-columns: minmax(0, 1fr); }
 }
 
 .card {
@@ -497,25 +722,69 @@ html, body, [class*="css"] {
     padding-bottom: 6px;
 }
 
-.stTabs [data-baseweb="tab-list"] {
+.stTabs [role="tablist"] {
     background: #FFFFFF;
     border: 1px solid var(--uft-border);
-    border-radius: 10px;
-    gap: 4px;
-    padding: 4px;
+    border-radius: 12px;
+    gap: 2px;
+    overflow-x: auto;
+    padding: 6px 6px 0;
+    scrollbar-width: thin;
 }
 
-.stTabs [data-baseweb="tab"] {
-    border-radius: 7px;
-    color: var(--uft-muted);
-    font-size: .73rem;
+.stTabs [role="tab"] {
+    align-items: center;
+    border-bottom: 2px solid transparent;
+    border-radius: 7px 7px 0 0;
+    color: #475569;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: .74rem;
+    font-weight: 500;
+    gap: 8px;
+    padding: 10px 12px;
+}
+
+.stTabs [role="tab"]::before {
+    background-color: #94A3B8;
+    content: "";
+    flex: 0 0 14px;
+    height: 14px;
+    mask: var(--tab-icon) center / contain no-repeat;
+    width: 14px;
+}
+
+.stTabs [role="tab"] p {
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.stTabs [role="tab"]:hover {
+    color: var(--uft-navy);
+}
+
+.stTabs [role="tab"][aria-selected="true"] {
+    background: #F1F6FB;
+    border-bottom-color: var(--uft-navy);
+    color: var(--uft-navy) !important;
     font-weight: 700;
-    padding: 8px 11px;
 }
 
-.stTabs [aria-selected="true"] {
-    background: #E8F5F1;
-    color: var(--uft-green) !important;
+.stTabs [role="tab"][aria-selected="true"]::before {
+    background-color: var(--uft-navy);
+}
+
+.stTabs [data-baseweb="tab-highlight"],
+.stTabs [data-baseweb="tab-border"],
+.stTabs .react-aria-SelectionIndicator {
+    display: none;
+}
+
+.stTabs [role="tab"]:focus-visible {
+    outline: 2px solid var(--uft-navy);
+    outline-offset: -2px;
 }
 
 [data-testid="stDataFrame"] {
@@ -529,21 +798,36 @@ html, body, [class*="css"] {
     font-weight: 700;
 }
 
-@media (max-width: 900px) {
-    .uft-header-anchor + div [data-testid="stHorizontalBlock"] {
-        padding: 8px 12px;
-        position: static;
+@container (max-width: 700px) {
+    [data-testid="stHorizontalBlock"]:has(.uft-header-icon) {
+        grid-template-columns: 36px minmax(0, 1fr) auto !important;
+        grid-template-areas: "icon title year" "count count login" !important;
+        gap: 12px 10px !important;
     }
-    .uft-header-title { font-size: 1rem; }
-    .header-actions { justify-content: flex-start; margin-top: 6px; }
-    .kc { min-width: 125px; }
+    [data-testid="stHorizontalBlock"]:has(.uft-header-icon) > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(4) {
+        justify-self: start !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    body:has([data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHorizontalBlock"]:has(.uft-header-icon) {
+        grid-template-columns: 36px minmax(0, 1fr) auto !important;
+        grid-template-areas: "icon title year" "count count login" !important;
+        gap: 12px 10px !important;
+    }
+    body:has([data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHorizontalBlock"]:has(.uft-header-icon) > :is([data-testid="stColumn"], [data-testid="column"]):nth-child(4) {
+        justify-self: start !important;
+    }
 }
 
 @media (max-width: 600px) {
     [data-testid="stAppViewContainer"] > .main { padding-top: .2rem; }
-    .krow { gap: 7px; }
-    .kc { min-width: calc(50% - 7px); }
-    .stTabs [data-baseweb="tab"] { font-size: .66rem; padding: 7px 6px; }
+    .uft-header-title { font-size: .9rem; }
+    .uft-header-meta { font-size: .65rem; }
+    .uft-header-icon { height: 36px; }
+    .count-pill { font-size: .62rem; padding: 6px 8px; width: fit-content; }
+    .krow, .krow-secondary { gap: 8px; }
+    .stTabs [role="tab"] { font-size: .7rem; padding: 9px 10px; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -563,11 +847,59 @@ def card(fig):
 def sec(t):
     st.markdown(f'<div class="sec">{t}</div>', unsafe_allow_html=True)
 
-def kpi(ico, val, lbl, cor, sub=""):
-    s = f'<div class="kc-sub">{sub}</div>' if sub else ""
-    return (f'<div class="kc"><div class="kc-bar" style="background:{cor}"></div>'
-            f'<div class="kc-ico">{ico}</div><div class="kc-val">{val}</div>'
-            f'<div class="kc-lbl">{lbl}</div>{s}</div>')
+# Silhuetas locais para os indicadores e a navegação; não dependem de fontes externas.
+BODY_ICONS = {
+    "people": '<circle cx="12" cy="7" r="3"/><circle cx="5" cy="9" r="2.3"/><circle cx="19" cy="9" r="2.3"/><path d="M6 20v-2a6 6 0 0 1 12 0v2H6zm-5-1v-1a4 4 0 0 1 4-4c.7 0 1.3.2 1.9.5A8 8 0 0 0 4 19H1zm19 0a8 8 0 0 0-2.9-4.5c.6-.3 1.2-.5 1.9-.5a4 4 0 0 1 4 4v1h-3z"/>',
+    "teacher": '<path d="M3 3h18v12h-9v-2h7V5H5v4H3V3z"/><circle cx="7" cy="11" r="2.5"/><path d="M2 21v-3a5 5 0 0 1 9-3l3-2 1 1.5-4.5 3L9 16v5H2z"/>',
+    "tools": '<path d="M22 4a6 6 0 0 1-7.4 7.5L6 20.1A2.2 2.2 0 0 1 2.9 17l8.6-8.6A6 6 0 0 1 19 1l-3.2 3.2.5 3.5 3.5.5L22 4z"/><path d="m3 2 4 1 2 3-2 2-3-2-1-4zm7 9 3 3-1.5 1.5-3-3L10 11zm4 4 7 6-2 2-6-7 1-1z"/>',
+    "check": '<path d="m1 12 2-2 4 4L17 4l2 2L7 18 1 12zm8 5 2 2L23 7l-2-2L9 17z"/>',
+    "graduation": '<path d="M12 3 1 8l11 5 9-4.1V16h2V8L12 3zm-7 9v4.5C5 19 8.1 21 12 21s7-2 7-4.5V12l-7 3.2L5 12z"/>',
+    "book": '<path d="M5 2h13a2 2 0 0 1 2 2v16H7a2 2 0 0 0-2 2H3V5a3 3 0 0 1 2-3zm2 2v12.5c.6-.3 1.3-.5 2-.5h9V4H7zm4 1h4v7l-2-1.5-2 1.5V5zM7 18h13v4H7a2 2 0 0 1 0-4z"/>',
+    "star": '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.2-6.2 3.2L7 14.2 2 9.3l6.9-1L12 2z"/>',
+    "cake": '<path d="M6 2h2v4H6V2zm5 0h2v4h-2V2zm5 0h2v4h-2V2zM4 8h16a2 2 0 0 1 2 2v3c-1 0-1.5 1-2.5 1s-1.5-1-2.5-1-1.5 1-2.5 1-1.5-1-2.5-1-1.5 1-2.5 1-1.5-1-2.5-1-1.5 1-2.5 1S3 13 2 13v-3a2 2 0 0 1 2-2zM2 15c1 0 1.5 1 2.5 1s1.5-1 2.5-1 1.5 1 2.5 1 1.5-1 2.5-1 1.5 1 2.5 1 1.5-1 2.5-1 1.5 1 2.5 1S21 15 22 15v5H2v-5zm-1 6h22v2H1v-2z"/>',
+    "warning": '<path fill-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 6h2v6h-2V8zm0 8h2v2h-2v-2z"/>',
+    "building": '<path d="M12 2 1 7v2h22V7L12 2zM3 10h3v8H3v-8zm5 0h3v8H8v-8zm5 0h3v8h-3v-8zm5 0h3v8h-3v-8zM2 19h20v3H2v-3z"/>',
+    "scale": '<path d="M11 2h2v3h8v2h-2l4 8c0 2-1.8 3-4 3s-4-1-4-3l4-8h-6v12h4v2H7v-2h4V7H5l4 8c0 2-1.8 3-4 3s-4-1-4-3l4-8H3V5h8V2zM3.5 14h3L5 10.5 3.5 14zm14 0h3L19 10.5 17.5 14z"/>',
+    "chart": '<path d="M3 3h2v16h16v2H3V3zm4 12 4-5 3 2 5-6 2 1.5-6.5 8-3-2L9 17l-2-2z"/>',
+    "file": '<path d="M5 2h9l5 5v15H5V2zm8 2v4h4l-4-4zM8 11v2h8v-2H8zm0 4v2h8v-2H8zm0 4v1h6v-1H8z"/>',
+}
+
+
+def body_icon(name):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
+            f'fill="currentColor" aria-hidden="true">{BODY_ICONS[name]}</svg>')
+
+
+def kpi(ico, val, lbl, sub="", unit="", wide=False):
+    subtitle = f'<div class="kc-sub">{sub}</div>' if sub else ""
+    suffix = f' <span class="kc-unit">{unit}</span>' if unit else ""
+    classes = "kc kc-wide" if wide else "kc"
+    return (f'<div class="{classes}"><div class="kc-bar"></div>'
+            f'<div class="kc-heading"><span class="kc-ico">{body_icon(ico)}</span>'
+            f'<span class="kc-lbl">{lbl}</span></div>'
+            f'<div class="kc-val">{val}{suffix}</div>{subtitle}</div>')
+
+
+def numero_pt(valor):
+    return f"{valor:,}".replace(",", ".")
+
+
+def decimal_pt(valor, casas=1):
+    return f"{valor:.{casas}f}".replace(".", ",")
+
+
+TAB_ICONS = ("graduation", "building", "scale", "chart", "warning", "file")
+tab_icon_rules = []
+for index, icon_name in enumerate(TAB_ICONS, start=1):
+    icon_data = base64.b64encode(body_icon(icon_name).encode()).decode()
+    tab_icon_rules.append(
+        f'.stTabs [role="tab"]:nth-of-type({index}) '
+        f'{{--tab-icon:url("data:image/svg+xml;base64,{icon_data}");}}'
+    )
+tab_icon_rules.append(
+    '.stTabs [role="tab"]:nth-of-type(5):not([aria-selected="true"])::before '
+    '{background-color:#D97706;}'
+)
 
 def pct(serie, nome="Valor"):
     ct = serie.value_counts().reset_index()
@@ -713,13 +1045,8 @@ if erro:
 # ============================================================
 
 # ── Logo na sidebar ──────────────────────────────────────────
-# st.sidebar.image() carrega o arquivo direto — sem base64,
-# sem filtro CSS. Funciona localmente e no Streamlit Cloud.
-# Para centralizar a imagem usamos 3 colunas dentro da sidebar.
 if LOGO_PATH:
-    sb1, sb2, sb3 = st.sidebar.columns([1.5, 1.4, 1.5])
-    with sb2:
-        st.image(LOGO_PATH, width=78)
+    st.sidebar.image(LOGO_PATH, width=150)
 else:
     st.sidebar.markdown(
         '<div style="text-align:center;font-size:2.4rem;padding:.5rem 0;">🎓</div>',
@@ -839,7 +1166,7 @@ sit_sel = checkbox_filters("Situação funcional", "SITUAÇÃO", "status",
 reg_sel = checkbox_filters("Regime jurídico", "REGIME_JURIDICO", "legal")
 ing_sel = checkbox_filters("Forma de ingresso", "INGRESSO_GRUPO", "entry")
 campus_sel = checkbox_filters("Campus universitário", "CAMPUS", "campus")
-st.sidebar.caption("Marque as opções desejadas. Os indicadores são atualizados automaticamente.")
+
 
 # ============================================================
 # FILTROS
@@ -855,6 +1182,34 @@ df_f = df_raw[
     df_raw["INGRESSO_GRUPO"].isin(ing_sel)
 ].copy()
 
+# Cabeçalho disponível também quando os filtros não retornam registros.
+total = len(df_f)
+total_formatado = f"{total:,}".replace(",", ".")
+with st.container():
+    st.markdown('<div class="uft-header-marker" aria-hidden="true"></div>',
+                unsafe_allow_html=True)
+    col_icone, col_titulo, col_ano, col_badge, col_entrar = st.columns([1, 6, 1, 3, 1.5])
+    with col_icone:
+        st.markdown('<span class="uft-header-icon" aria-hidden="true">◔</span>',
+                    unsafe_allow_html=True)
+    with col_titulo:
+        st.markdown("""
+<div>
+    <div class="uft-header-title">Painel Docentes e Técnicos</div>
+    <div class="uft-header-meta">Universidade Federal do Tocantins · <strong>PROGRAD</strong></div>
+</div>
+""", unsafe_allow_html=True)
+    with col_ano:
+        st.markdown(f'<span class="uft-year-pill">{datetime.now().year}</span>',
+                    unsafe_allow_html=True)
+    with col_badge:
+        st.markdown(f'<div class="count-pill">👥 {total_formatado} registros filtrados</div>',
+                    unsafe_allow_html=True)
+    with col_entrar:
+        if st.button("🔒 Entrar", key="uft_entrar"):
+            st.toast("O acesso restrito está em desenvolvimento.")
+    align_sidebar_open_button()
+
 if df_f.empty:
     st.warning("⚠️ Nenhum registro com os filtros selecionados.")
     st.stop()
@@ -862,7 +1217,6 @@ if df_f.empty:
 # ============================================================
 # KPIs
 # ============================================================
-total    = len(df_f)
 docentes = (df_f["CATEGORIA"] == "DOCENTE").sum()
 tecnicos = (df_f["CATEGORIA"] == "TÉCNICO").sum()
 ativos   = (df_f["SITUAÇÃO"].str.upper() == "ATIVO").sum()
@@ -870,7 +1224,7 @@ dout_pd  = df_f["TIT_GRUPO"].isin(["Doutorado","Pós-Doutorado"]).sum()
 mestres  = (df_f["TIT_GRUPO"] == "Mestrado").sum()
 desvios  = int(df_f["DESVIO"].sum())
 n_aval   = int(df_f["DESVIO_AVAL"].sum())
-pct_desv = round(desvios / max(n_aval,1) * 100, 1)
+pct_desv = round(desvios / n_aval * 100, 1) if n_aval else None
 
 def iqcd(d):
     """Média ponderada da titulação (pesos IQCD). None se não houver registros."""
@@ -878,73 +1232,35 @@ def iqcd(d):
     return round(d["TIT_GRUPO"].astype(str).map(PESOS_TIT).fillna(0).mean(), 2)
 
 iqcd_doc = iqcd(df_f[df_f["CATEGORIA"] == "DOCENTE"])
-iqcd_tec = iqcd(df_f[df_f["CATEGORIA"] == "TÉCNICO"])
-iqcd_s   = f"{iqcd_doc:.2f}/5" if iqcd_doc is not None else "—"
+iqcd_s   = decimal_pt(iqcd_doc, 2) if iqcd_doc is not None else "—"
 idade_v  = df_f["IDADE"].mean()
-idade_s  = f"{idade_v:.1f} a" if pd.notna(idade_v) else "—"
-
-# ============================================================
-# ▼▼▼ HEADER — Altere aqui a cor/estilo do título principal ▼▼▼
-#
-# background: usa as variáveis P, S e D da paleta acima.
-# Para mudar o fundo do cabeçalho, troque P, S ou D.
-# A logo aparece à esquerda (se disponível) ou um emoji.
-# ============================================================
-# =================================================================
-# HEADER PRINCIPAL — composição inspirada na tela do Stitch
-# =================================================================
-st.markdown('<div class="uft-header-anchor" style="display:none;"></div>',
-            unsafe_allow_html=True)
-
-# ── Colunas do header: [logo | título | ações] ───────────────
-col_logo, col_titulo, col_badge = st.columns([0.8, 6.2, 3])
-
-with col_logo:
-    if LOGO_PATH:
-        # st.image() lê o arquivo diretamente — sem base64 nem data: URI
-        st.image(LOGO_PATH, width=76)
-    else:
-        st.markdown(
-            '<div style="font-size:3rem;text-align:center;padding-top:4px;">🎓</div>',
-            unsafe_allow_html=True
-        )
-
-with col_titulo:
-    st.markdown("""
-<div style="padding:4px 0;">
-  <div class="uft-header-title">Painel Docentes e Técnicos</div>
-  <div class="uft-header-meta">
-    Universidade Federal do Tocantins · <strong>Gestão Estratégica de Pessoas &amp; PROGRAD</strong>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-with col_badge:
-    st.markdown(f"""
-<div class="header-actions">
-  <div class="count-pill">👥 {total:,} registros filtrados</div>
-  <div class="access-pill">🔒 Acesso Restrito · Entrar</div>
-</div>
-""", unsafe_allow_html=True)
-
-# Faixa decorativa abaixo das colunas
-st.markdown('<div class="uft-header-stripe"></div>', unsafe_allow_html=True)
+idade_s  = decimal_pt(idade_v) if pd.notna(idade_v) else "—"
+desvio_s = f"{decimal_pt(pct_desv)}%" if pct_desv is not None else "—"
+desvio_sub = (
+    f"{numero_pt(desvios)} {'caso' if desvios == 1 else 'casos'} em "
+    f"{numero_pt(n_aval)} servidores avaliáveis"
+    if n_aval else "Nenhum servidor com lotação avaliável"
+)
 
 # ============================================================
 # KPI CARDS
 # ============================================================
 st.markdown(
-    '<div class="krow">'
-    + kpi("👥", f"{total:,}",      "Total",         P)
-    + kpi("🏫", f"{docentes:,}",   "Docentes",      A,  f"{docentes/max(total,1)*100:.1f}%")
-    + kpi("🔧", f"{tecnicos:,}",   "Técnicos",      D,  f"{tecnicos/max(total,1)*100:.1f}%")
-    + kpi("✅", f"{ativos:,}",     "Ativos",        VD, f"{ativos/max(total,1)*100:.1f}%")
-    + kpi("🎓", f"{dout_pd:,}",    "Doutores/PD",   D,  f"{dout_pd/max(total,1)*100:.1f}%")
-    + kpi("📚", f"{mestres:,}",    "Mestres",       A,  f"{mestres/max(total,1)*100:.1f}%")
-    + kpi("⭐", iqcd_s,            "IQCD Docente",  VD, "pesos INEP")
-    + kpi("🎂", idade_s,           "Idade Média",   A)
-    + kpi("⚠️", f"{pct_desv}%",   "Desvio Lot.",   AL, f"{desvios:,} de {n_aval:,} avaliáveis")
-    + '</div>',
+    '<style>' + '\n'.join(tab_icon_rules) + '</style>'
+    + '<section class="kpi-dashboard" aria-label="Indicadores do quadro filtrado">'
+    + '<div class="krow">'
+    + kpi("people", numero_pt(total), "Total", "Servidores filtrados")
+    + kpi("teacher", numero_pt(docentes), "Docentes", f"{decimal_pt(docentes / total * 100)}% do quadro")
+    + kpi("tools", numero_pt(tecnicos), "Técnicos", f"{decimal_pt(tecnicos / total * 100)}% do quadro")
+    + kpi("check", numero_pt(ativos), "Ativos", f"{decimal_pt(ativos / total * 100)}% do quadro")
+    + kpi("graduation", numero_pt(dout_pd), "Doutores / PD", f"{decimal_pt(dout_pd / total * 100)}% do quadro")
+    + kpi("book", numero_pt(mestres), "Mestres", f"{decimal_pt(mestres / total * 100)}% do quadro")
+    + kpi("star", iqcd_s, "IQCD Docente", "Pesos oficiais INEP", unit="/ 5,0" if iqcd_doc is not None else "")
+    + '</div><div class="krow-secondary">'
+    + kpi("cake", idade_s, "Média Etária Institucional", "Média das idades informadas no quadro filtrado",
+          unit="anos" if pd.notna(idade_v) else "", wide=True)
+    + kpi("warning", desvio_s, "Desvio de Lotação Observado", desvio_sub, wide=True)
+    + '</div></section>',
     unsafe_allow_html=True
 )
 
@@ -952,81 +1268,17 @@ st.markdown(
 # ABAS
 # ============================================================
 tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs([
-    "🎓 Qualificação","🏢 Lotação & Campus",
-    "⚖️ Regime & Situação","📈 Perfil Etário",
-    "⚠️ Desvio & Ingresso","📄 Tabela & Download",
+    "Qualificação & Titulação", "Lotação & Campus",
+    "Regime & Situação", "Perfil Etário",
+    "Desvio & Ingresso", "Tabela & Download",
 ])
 
 with tab1:
-    sec("🎓 Titulação por Categoria")
-    c1,c2 = st.columns([3,2])
-    with c1:
-        tg = df_f.groupby(["TIT_GRUPO","CATEGORIA"]).size().reset_index(name="Qtd")
-        tg["TIT_GRUPO"] = pd.Categorical(tg["TIT_GRUPO"],categories=ORDEM_TIT,ordered=True)
-        fig = px.bar(tg.sort_values("TIT_GRUPO"),x="Qtd",y="TIT_GRUPO",color="CATEGORIA",
-                     orientation="h",barmode="stack",height=380,text_auto=True,
-                     color_discrete_map={"DOCENTE":P,"TÉCNICO":D},
-                     labels={"TIT_GRUPO":"Titulação","Qtd":"Quantidade"})
-        fig.update_layout(**BL,legend=dict(orientation="h",y=-0.18,font_size=12),
-                          xaxis=dict(showgrid=True,gridcolor="#EEF2F8"))
-        card(fig)
-    with c2:
-        sd = pct(df_f["SEXO"].map({"M":"Masculino","F":"Feminino"}).fillna(df_f["SEXO"]),"Sexo")
-        fig = px.pie(sd,names="Sexo",values="Qtd",hole=0.58,height=380,
-                     color_discrete_sequence=[P,D])
-        fig.update_traces(texttemplate="<b>%{label}</b><br>%{value:,} (%{percent:.1%})",
-                          textposition="outside",textfont_size=12)
-        fig.update_layout(**BL)
-        card(fig)
-
-    sec("💼 Top 15 Cargos")
-    tc1,tc2 = st.columns(2)
-    with tc1:
-        st.caption("**Técnico-Administrativos**")
-        ct = pct(df_f[df_f["CATEGORIA"]=="TÉCNICO"]["CARGO"],"Cargo").head(15)
-        fig = px.bar(ct,x="Qtd",y="Cargo",orientation="h",text="Label",
-                     color="Qtd",color_continuous_scale=ESC_OURO,height=480)
-        fig.update_traces(textposition="outside",textfont_size=10)
-        fig.update_layout(**BL,coloraxis_showscale=False,
-                          xaxis=dict(showgrid=True,gridcolor="#F8F4EA",
-                                     range=[0,ct["Qtd"].max()*1.35]))
-        card(fig)
-    with tc2:
-        st.caption("**Docentes**")
-        cd = pct(df_f[df_f["CATEGORIA"]=="DOCENTE"]["CARGO"],"Cargo").head(15)
-        fig = px.bar(cd,x="Qtd",y="Cargo",orientation="h",text="Label",
-                     color="Qtd",color_continuous_scale=ESC_AZUL,height=480)
-        fig.update_traces(textposition="outside",textfont_size=10)
-        fig.update_layout(**BL,coloraxis_showscale=False,
-                          xaxis=dict(showgrid=True,gridcolor="#EEF2F8",
-                                     range=[0,cd["Qtd"].max()*1.35]))
-        card(fig)
-
-    sec("📊 Índice de Qualificação (pesos IQCD: Doutor 5 · Mestre 3 · Especialista 2 · Graduado 1)")
-    def gauge(valor, titulo):
-        fig = go.Figure(go.Indicator(
-            mode="gauge+number",value=valor,
-            number={"suffix":" / 5","font":{"size":40,"color":P}},
-            title={"text":titulo,"font":{"size":14}},
-            gauge={"axis":{"range":[0,5],"tickwidth":1,"tickcolor":P},
-                   "bar":{"color":P,"thickness":0.25},"bgcolor":"white",
-                   "borderwidth":2,"bordercolor":BD,
-                   "steps":[{"range":[0,1],"color":"#F0F4FA"},{"range":[1,2],"color":"#C5D9F0"},
-                             {"range":[2,3],"color":"#5A9AD4"},{"range":[3,4],"color":"#1A5FA8"},
-                             {"range":[4,5],"color":P}]},
-        ))
-        fig.update_layout(**BL,height=280)
-        return fig
-    g1,g2 = st.columns(2)
-    with g1:
-        if iqcd_doc is not None: card(gauge(iqcd_doc, "<b>Docentes</b> · IQCD"))
-        else: st.info("Nenhum docente nos filtros selecionados.")
-    with g2:
-        if iqcd_tec is not None: card(gauge(iqcd_tec, "<b>Técnicos</b> · mesma escala (referência)"))
-        else: st.info("Nenhum técnico nos filtros selecionados.")
-    st.caption("Docentes e técnicos são calculados separadamente: os perfis de titulação "
-               "das duas carreiras não são comparáveis. O IQCD oficial se aplica apenas a docentes.")
-
+    st.markdown(
+        qualification_dashboard(df_f, iqcd_doc, {name: body_icon(name) for name in
+                                ("graduation", "people", "building", "teacher", "star")}),
+        unsafe_allow_html=True,
+    )
 with tab2:
     sec("🗺️ Distribuição por Campus")
     ca1,ca2 = st.columns(2)
